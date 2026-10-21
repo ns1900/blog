@@ -83,14 +83,20 @@ npm run dev
 
 ## 四、部署到 Vercel + 绑定 ns1900.com
 
-1. 把项目推到 GitHub（私有仓库也可以）
+> **完整小白版操作步骤见 [`docs/DEPLOY.md`](docs/DEPLOY.md)**（含截图级说明、DNS 配置、常见报错处理）
+
+流程概览：
+
+1. 把项目推到 GitHub（公开仓库最简单）
 2. Vercel → **Add New → Project** → 选择该仓库 → Framework 自动识别为 Astro
 3. **不需要改任何构建配置**（`vercel.json` 已经写好），直接 Deploy
 4. **Settings → Domains → Add** 输入 `ns1900.com` 和 `www.ns1900.com`
 5. 在域名注册商处按提示配置 DNS：
    - `A` 记录 `@` → `76.76.21.21`
    - `CNAME` 记录 `www` → `cname.vercel-dns.com`
-6. 生效后 Vercel 自动签发 HTTPS 证书
+6. 生效后 Vercel 自动签发 HTTPS 证书（无需备案）
+
+**日常更新**：双击项目根目录的 `publish.bat`，一键 add/commit/push，Vercel 自动重新构建。
 
 > 记得把 `src/consts.ts` 里的 `url` 改成最终域名（默认已填 `https://ns1900.com`）。
 
