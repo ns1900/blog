@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getTags, getPosts } from '../../lib/content';
+
+const tags = await getTags();
+const posts = await getPosts();
+
+// 标签云 + 分组（按文章数）
+const max = Math.max(1, ...tags.map((t) => t.count));
+---
+
+<BaseLayout title="分类" description="南瓜镇的全部分类。">
+  <section class="wrap pt-12 md:pt-20 pb-10">
+    <h1 class="font-serif text-[1.9rem] md:text-[2.4rem] font-semibold tracking-[0.06em] text-ink">
+      分类
+    </h1>
+    <p class="mt-2 meta">{tags.length} 个主题 · {posts.length} 篇文章</p>
+  </section>
+
+  <section class="wrap">
+    {
+      tags.length === 0 ? (
+        <p class="py-20 text-center font-serif text-ink-faint">还没有分类。</p>
+      ) : (
+        <div class="border-t border-ink/75 pt-6">
+          <div class="flex flex-wrap gap-x-6 gap-y-4 items-baseline">
+            {tags.map(({ tag, count }) => {
+              const scale = 0.92 + (count / max) * 0.55;
+              return (
+                <a
+                  href={`/tags/${encodeURIComponent(tag)}`}
+                  class="group inline-flex items-baseline gap-1.5 link-underline"
+                >
+                  <span
+                    class="font-serif text-ink group-hover:text-accent transition-colors"
+                    style={`font-size:${scale.toFixed(2)}rem`}
+                  >
+                    {tag}
+                  </span>
+                  <sup class="font-sans text-[0.62rem] text-ink-faint tabular-nums">
+                    {count}
+                  </sup>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostRow from '../../components/PostRow.astro';
+import Pagination from '../../components/Pagination.astro';
+import { getPosts } from '../../lib/content';
+import { SITE } from '../../consts';
+import { collectTags } from '../../lib/utils';
+
+const all = await getPosts();
+const tags = collectTags(all);
+
+const pageSize = SITE.postsPerPage;
+const page1 = all.slice(0, pageSize);
+const totalPages = Math.max(1, Math.ceil(all.length / pageSize));
+---
+
+<BaseLayout
+  title="文章"
+  description={`南瓜镇的全部文章，共 ${all.length} 篇。`}
+>
+  <section class="wrap pt-12 md:pt-20 pb-8">
+    <div class="flex items-end justify-between gap-4 border-b border-ink/75 pb-3">
+      <div>
+        <h1 class="font-serif text-[1.9rem] md:text-[2.4rem] font-semibold tracking-[0.06em] text-ink">
+          文章
+        </h1>
+        <p class="mt-1.5 meta">按时间倒序 · 共 {all.length} 篇</p>
+      </div>
+      <a
+        href="/tags"
+        class="shrink-0 font-sans text-[0.78rem] text-ink-soft hover:text-accent transition-colors pb-1"
+      >
+        按分类浏览 →
+      </a>
+    </div>
+
+    <!-- 标签横向滚动条 -->
+    {
+      tags.length > 0 && (
+        <div class="mt-5 -mx-5 px-5 md:mx-0 md:px-0 overflow-x-auto no-scrollbar">
+          <div class="flex gap-1.5 w-max md:w-auto md:flex-wrap">
+            {tags.map(({ tag, count }) => (
+              <a href={`/tags/${encodeURIComponent(tag)}`} class="tag-chip whitespace-nowrap">
+                {tag}
+                <span class="ml-1.5 opacity-50 tabular-nums">{count}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
+  </section>
+
+  <section class="wrap">
+    {all.length === 0 ? (
+      <p class="py-24 text-center font-serif text-ink-faint">还没有文章。</p>
+    ) : (
+      <div>
+        {page1.map((post, i) => <PostRow post={post} index={i + 1} />)}
+      </div>
+    )}
+
+    <Pagination currentPage={1} totalPages={totalPages} base="/articles" />
+  </section>
+</BaseLayout>

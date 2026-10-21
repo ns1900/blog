@@ -1,0 +1,164 @@
+---
+import '../styles/global.css';
+import { SITE, NAV } from '../consts';
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** 文章页传入文章封面，用于 OG */
+  image?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = SITE.description,
+  image,
+  type = 'website',
+  noindex = false,
+} = Astro.props;
+
+const pageTitle = title ? `${title} – ${SITE.title}` : `${SITE.title} · ${SITE.subtitle}`;
+const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
+const ogImage = image
+  ? new URL(image, Astro.site ?? SITE.url).href
+  : new URL('/og-default.jpg', Astro.site ?? SITE.url).href;
+
+const isActive = (href: string) => {
+  if (href === '/') return Astro.url.pathname === '/' || Astro.url.pathname === '';
+  return Astro.url.pathname.startsWith(href);
+};
+---
+
+<!doctype html>
+<html lang={SITE.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- 主题色（跟随背景） -->
+    <meta name="theme-color" content="#f4ede9" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content={SITE.title} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="zh_CN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <!-- 图标 -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="application/rss+xml" title={SITE.title} href="/rss.xml" />
+
+    <!-- 本地字体预加载（正文字体，避免 FOUT 抖动） -->
+    <link
+      rel="preload"
+      href="/fonts/NotoSerifSC-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+  </head>
+
+  <body class="min-h-screen flex flex-col antialiased">
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-ink focus:text-paper focus:px-4 focus:py-2 focus:text-sm"
+    >
+      跳到正文
+    </a>
+
+    <!-- 顶部导航 -->
+    <header class="sticky top-0 z-40 bg-paper/92 backdrop-blur-sm border-b border-rule/70">
+      <div class="wrap flex items-center justify-between h-16 md:h-20">
+        <a href="/" class="group flex flex-col justify-center shrink-0 leading-none">
+          <span
+            class="font-serif text-[1.15rem] md:text-[1.3rem] tracking-[0.08em] font-semibold text-ink group-hover:text-accent transition-colors"
+          >
+            南瓜镇
+          </span>
+          <span class="mt-1.5 text-[0.66rem] md:text-[0.68rem] tracking-[0.18em] text-ink-faint">
+            聂帅的个人博客
+          </span>
+        </a>
+
+        <nav aria-label="主导航">
+          <ul class="flex items-center gap-5 md:gap-8">
+            {
+              NAV.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={isActive(item.href) ? 'page' : undefined}
+                    class:list={[
+                      'relative font-sans text-[0.82rem] tracking-[0.05em] transition-colors py-1',
+                      isActive(item.href)
+                        ? 'text-ink after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-px after:bg-accent'
+                        : 'text-ink-soft hover:text-accent',
+                    ]}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+            <li>
+              <a
+                href="/tags"
+                class:list={[
+                  'relative font-sans text-[0.82rem] tracking-[0.05em] transition-colors py-1',
+                  Astro.url.pathname.startsWith('/tags')
+                    ? 'text-ink after:absolute after:-bottom-0.5 after:left-0 after:right-0 after:h-px after:bg-accent'
+                    : 'text-ink-soft hover:text-accent',
+                ]}
+                aria-current={Astro.url.pathname.startsWith('/tags') ? 'page' : undefined}
+              >
+                分类
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="flex-1">
+      <slot />
+    </main>
+
+    <footer class="mt-20 md:mt-28 border-t border-rule/80">
+      <div class="wrap py-10 md:py-12">
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div>
+            <p class="font-serif text-[1.05rem] tracking-[0.06em] text-ink">南瓜镇</p>
+            <p class="mt-1.5 meta">{SITE.subtitle}</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <a href="/articles" class="meta hover:text-accent transition-colors">文章</a>
+            <a href="/tags" class="meta hover:text-accent transition-colors">分类</a>
+            <a href="/about" class="meta hover:text-accent transition-colors">关于</a>
+            <a href="/rss.xml" class="meta hover:text-accent transition-colors">RSS</a>
+          </div>
+        </div>
+        <div class="mt-8 pt-5 border-t border-rule/60 flex flex-col sm:flex-row gap-2 sm:justify-between">
+          <p class="meta">© {SITE.since}–{new Date().getFullYear()} {SITE.author} · 保留所有权利</p>
+          <p class="meta">Made with Astro · 字里行间慢慢来</p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,54 @@
+---
+/**
+ * ResponsiveImage
+ * ------------------------------------------------------------
+ * 统一的响应式图片组件，用于 public/images 下的图片。
+ *
+ * 用法：
+ *   <ResponsiveImage src="/images/a.jpg" alt="说明" width={1200} height={800} />
+ *
+ * 特性：
+ *   - 自动 loading="lazy" + decoding="async"（首屏可传 loading="eager"）
+ *   - 指定 width/height 时写死宽高比，避免图片加载时的布局抖动
+ *   - 配合 CSS 实现真正的自适应宽度（max-width:100%, height:auto）
+ */
+interface Props {
+  src: string;
+  alt?: string;
+  width?: number;
+  height?: number;
+  loading?: 'lazy' | 'eager';
+  class?: string;
+  /** 宽幅：在大屏上突破正文宽度 */
+  wide?: boolean;
+  /** 圆角 */
+  rounded?: boolean;
+}
+
+const {
+  src,
+  alt = '',
+  width,
+  height,
+  loading = 'lazy',
+  class: className = '',
+  wide = false,
+  rounded = true,
+} = Astro.props;
+---
+
+<img
+  src={src}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={loading}
+  decoding="async"
+  fetchpriority={loading === 'eager' ? 'high' : undefined}
+  class:list={[
+    'block h-auto w-full bg-paper-soft',
+    rounded && 'rounded-[3px]',
+    wide && 'md:-mx-16 md:w-[calc(100%+8rem)] md:max-w-none',
+    className,
+  ]}
+/>

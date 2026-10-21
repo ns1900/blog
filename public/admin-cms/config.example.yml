@@ -1,0 +1,73 @@
+backend:
+  name: github
+  repo: ns1900/nanguazhen
+  branch: main
+  # 这两个是 OAuth 中转地址，部署完中转服务后替换
+  base_url: https://nanguazhen-oauth.vercel.app
+  auth_endpoint: /auth
+
+# 站点地址（用于预览链接）
+site_url: https://ns1900.com
+display_url: https://ns1900.com
+logo_url: https://ns1900.com/favicon.svg
+
+locale: zh_Hans
+
+# 图片默认保存位置
+media_folder: public/images
+public_folder: /images
+
+# 发布模式：直接提交到主分支（Vercel 会自动构建）
+publish_mode: simple
+
+collections:
+  - name: posts
+    label: 文章
+    label_singular: 文章
+    folder: src/content/posts
+    create: true
+    delete: true
+    slug: '{{year}}-{{month}}-{{day}}-{{slug}}'
+    preview_path: 'articles/{{fields.slug}}'
+    summary: '{{title}} · {{pubDate}}'
+    sortable_fields: ['pubDate', 'title']
+    fields:
+      - { name: title, label: 标题, widget: string }
+      - { name: subtitle, label: 副标题, widget: string, required: false }
+      - {
+          name: description,
+          label: 摘要,
+          widget: text,
+          required: false,
+          hint: 显示在列表与搜索结果中，建议 40–80 字,
+        }
+      - { name: pubDate, label: 发布日期, widget: datetime, date_format: 'YYYY-MM-DD', time_format: false, format: 'YYYY-MM-DD' }
+      - {
+          name: updatedDate,
+          label: 修订日期,
+          widget: datetime,
+          date_format: 'YYYY-MM-DD',
+          time_format: false,
+          format: 'YYYY-MM-DD',
+          required: false,
+        }
+      - { name: author, label: 作者, widget: string, default: NS }
+      - {
+          name: tags,
+          label: 标签,
+          widget: list,
+          required: false,
+          hint: '每个标签单独一行，用于站内筛选',
+        }
+      - {
+          name: cover,
+          label: 封面图,
+          widget: image,
+          required: false,
+          hint: 建议 1600×1067（3:2），会自动用于首页列表,
+        }
+      - { name: coverAlt, label: 封面说明, widget: string, required: false }
+      - { name: featured, label: 首页大图, widget: boolean, default: false, required: false }
+      - { name: pinned, label: 置顶, widget: boolean, default: false, required: false }
+      - { name: draft, label: 草稿, widget: boolean, default: false, required: false }
+      - { name: body, label: 正文, widget: markdown }

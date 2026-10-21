@@ -1,0 +1,60 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PostRow from '../../../components/PostRow.astro';
+import Pagination from '../../../components/Pagination.astro';
+import { getPosts } from '../../../lib/content';
+import { SITE } from '../../../consts';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const all = await getPosts();
+  const totalPages = Math.ceil(all.length / SITE.postsPerPage);
+
+  return Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => {
+    const page = i + 2;
+    return {
+      params: { page: String(page) },
+      props: {
+        posts: all.slice((page - 1) * SITE.postsPerPage, page * SITE.postsPerPage),
+        page,
+        totalPages,
+        total: all.length,
+      },
+    };
+  });
+};
+
+const { posts, page, totalPages, total } = Astro.props;
+const startIndex = (page - 1) * SITE.postsPerPage;
+---
+
+<BaseLayout title={`文章 · 第 ${page} 页`} description={`南瓜镇文章列表第 ${page} 页。`}>
+  <section class="wrap pt-12 md:pt-20 pb-8">
+    <div class="flex items-end justify-between gap-4 border-b border-ink/75 pb-3">
+      <div>
+        <h1 class="font-serif text-[1.9rem] md:text-[2.4rem] font-semibold tracking-[0.06em] text-ink">
+          文章
+        </h1>
+        <p class="mt-1.5 meta">第 {page} 页 · 共 {total} 篇</p>
+      </div>
+      <a
+        href="/tags"
+        class="shrink-0 font-sans text-[0.78rem] text-ink-soft hover:text-accent transition-colors pb-1"
+      >
+        按分类浏览 →
+      </a>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div>
+      {posts.map((post: any, i: number) => <PostRow post={post} index={startIndex + i + 1} />)}
+    </div>
+
+    <Pagination
+      currentPage={page}
+      totalPages={totalPages}
+      base="/articles"
+    />
+  </section>
+</BaseLayout>

@@ -1,0 +1,245 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostRow from '../../components/PostRow.astro';
+import { getStaticPathsForPosts } from '../../lib/paths';
+import { getPosts, buildToc } from '../../lib/content';
+import {
+  formatDate,
+  formatDateLong,
+  getSlug,
+  readingTime,
+  relatedPosts,
+} from '../../lib/utils';
+import { SITE } from '../../consts';
+
+export const getStaticPaths: GetStaticPaths = getStaticPathsForPosts;
+
+const { entry } = Astro.props;
+const { data } = entry;
+const { Content, headings } = await render(entry);
+
+const slug = getSlug(entry);
+const rt = data.readingTime ?? readingTime(entry.body);
+
+const all = await getPosts();
+const related = relatedPosts(all, entry, 3);
+
+const idx = all.findIndex((p) => p.id === entry.id);
+const newer = idx > 0 ? all[idx - 1] : null;
+const older = idx >= 0 && idx < all.length - 1 ? all[idx + 1] : null;
+
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+const cover = data.cover;
+const coverUrl = cover;
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: data.title,
+  description: data.description || data.subtitle || data.title,
+  datePublished: data.pubDate.toISOString(),
+  dateModified: (data.updatedDate ?? data.pubDate).toISOString(),
+  author: { '@type': 'Person', name: data.author },
+  publisher: { '@type': 'Organization', name: SITE.title },
+  mainEntityOfPage: new URL(Astro.url.pathname, SITE.url).href,
+  ...(coverUrl ? { image: new URL(coverUrl, SITE.url).href } : {}),
+};
+
+---
+
+<BaseLayout
+  title={data.title}
+  description={data.description || data.subtitle || data.title}
+  image={coverUrl}
+  type="article"
+>
+  <script
+    type="application/ld+json"
+    is:inline
+    set:html={JSON.stringify(jsonLd)}
+  />
+  <article class="wrap-narrow pt-10 md:pt-16">
+    <!-- 返回 -->
+    <nav class="mb-8 md:mb-10">
+      <a
+        href="/articles"
+        class="group inline-flex items-center gap-1.5 font-sans text-[0.75rem] tracking-[0.08em] text-ink-faint hover:text-accent transition-colors"
+      >
+        <span class="transition-transform group-hover:-translate-x-0.5">←</span>
+        文章
+      </a>
+    </nav>
+
+    <!-- 标题区 -->
+    <header class="fade-up">
+      {
+        data.tags.length > 0 && (
+          <div class="flex flex-wrap gap-1.5 mb-5">
+            {data.tags.map((tag) => (
+              <a href={`/tags/${encodeURIComponent(tag)}`} class="tag-chip">
+                {tag}
+              </a>
+            ))}
+          </div>
+        )
+      }
+
+      <h1
+        class="font-serif text-[1.72rem] leading-[1.35] md:text-[2.35rem] md:leading-[1.3] font-semibold tracking-[0.01em] text-ink"
+        style="text-wrap: balance"
+      >
+        {data.title}
+      </h1>
+
+      {
+        data.subtitle && (
+          <p class="mt-3 font-serif text-[1rem] md:text-[1.1rem] leading-[1.7] text-ink-soft">
+            {data.subtitle}
+          </p>
+        )
+      }
+
+      <div class="mt-6 pb-6 border-b border-rule flex flex-wrap items-center gap-x-3 gap-y-1.5">
+        <span class="meta">{data.author}</span>
+        <span class="w-px h-3 bg-rule"></span>
+        <time datetime={data.pubDate.toISOString()} class="meta" title={formatDateLong(data.pubDate)}>
+          {formatDate(data.pubDate)}
+        </time>
+        <span class="w-px h-3 bg-rule"></span>
+        <span class="meta">约 {rt} 分钟</span>
+        {
+          data.updatedDate && (
+            <>
+              <span class="w-px h-3 bg-rule"></span>
+              <span class="meta opacity-75">修订于 {formatDate(data.updatedDate)}</span>
+            </>
+          )
+        }
+      </div>
+    </header>
+
+    <!-- 封面 -->
+    {
+      cover && (
+        <figure class="mt-8 md:mt-10 fade-up fade-up-1">
+          <img
+            src={cover}
+            alt={data.coverAlt || data.title}
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+            class="w-full h-auto bg-paper-soft rounded-[3px]"
+          />
+          {
+            data.coverAlt && (
+              <figcaption class="mt-2.5 text-center font-sans text-[0.72rem] text-ink-faint">
+                {data.coverAlt}
+              </figcaption>
+            )
+          }
+        </figure>
+      )
+    }
+
+    <!-- 目录（仅长文） -->
+    {
+      toc.length >= 3 && (
+        <details class="mt-10 mb-8 border border-rule/80 bg-paper-soft/40 px-4 py-3 group">
+          <summary class="cursor-pointer font-sans text-[0.75rem] tracking-[0.16em] uppercase text-ink-soft list-none flex items-center justify-between">
+            <span>目录</span>
+            <span class="text-ink-faint transition-transform group-open:rotate-180">⌄</span>
+          </summary>
+          <ol class="mt-3 space-y-1.5 border-t border-rule/60 pt-3">
+            {toc.map((h) => (
+              <li class:list={[h.depth === 3 && 'pl-4']}>
+                <a
+                  href={`#${h.slug}`}
+                  class="font-serif text-[0.86rem] leading-relaxed text-ink-soft hover:text-accent transition-colors"
+                >
+                  {h.text}
+                </a>
+              </li>
+            ))}
+          </ol>
+        </details>
+      )
+    }
+
+    <!-- 正文 -->
+    <div class="prose mt-10 md:mt-12" id="post-body">
+      <Content />
+    </div>
+
+    <!-- 文末 -->
+    <footer class="mt-16 pt-7 border-t border-rule">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div>
+          <p class="font-serif text-[0.9rem] text-ink">— {data.author}</p>
+          <p class="mt-1 meta">{formatDateLong(data.pubDate)} 于南瓜镇</p>
+        </div>
+        {
+          data.tags.length > 0 && (
+            <div class="flex flex-wrap gap-1.5">
+              {data.tags.map((tag) => (
+                <a href={`/tags/${encodeURIComponent(tag)}`} class="tag-chip">
+                  #{tag}
+                </a>
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </footer>
+
+    <!-- 上一篇 / 下一篇 -->
+    {
+      (newer || older) && (
+        <nav class="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-px bg-rule border-y border-rule -mx-5 md:-mx-0">
+          {newer && (
+            <a
+              href={`/articles/${getSlug(newer)}`}
+              class="group bg-paper px-5 py-5 hover:bg-paper-soft/60 transition-colors"
+            >
+              <span class="meta block">← 较新的一篇</span>
+              <span class="mt-1.5 block font-serif text-[0.95rem] leading-snug text-ink group-hover:text-accent transition-colors">
+                {newer.data.title}
+              </span>
+            </a>
+          )}
+          {older && (
+            <a
+              href={`/articles/${getSlug(older)}`}
+              class:list={[
+                'group bg-paper px-5 py-5 hover:bg-paper-soft/60 transition-colors sm:text-right',
+                !newer && 'sm:col-start-2',
+              ]}
+            >
+              <span class="meta block">较旧的一篇 →</span>
+              <span class="mt-1.5 block font-serif text-[0.95rem] leading-snug text-ink group-hover:text-accent transition-colors">
+                {older.data.title}
+              </span>
+            </a>
+          )}
+        </nav>
+      )
+    }
+  </article>
+
+  <!-- 相关阅读 -->
+  {
+    related.length > 0 && (
+      <section class="wrap mt-20 md:mt-28">
+        <div class="border-t border-ink/75 pb-2 mb-1">
+          <h2 class="pt-3 font-sans text-[0.7rem] tracking-[0.26em] uppercase text-ink">
+            也许你还会读
+          </h2>
+        </div>
+        <div>
+          {related.map((post) => <PostRow post={post} />)}
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>

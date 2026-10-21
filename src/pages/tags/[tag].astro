@@ -1,0 +1,66 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostRow from '../../components/PostRow.astro';
+import { getTags, getPosts } from '../../lib/content';
+import { postsByTag } from '../../lib/utils';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const [tags, posts] = await Promise.all([getTags(), getPosts()]);
+  return tags.map(({ tag }) => ({
+    params: { tag },
+    props: { tag, posts: postsByTag(posts, tag) },
+  }));
+};
+
+const { tag, posts } = Astro.props;
+const otherTags = (await getTags()).filter((t) => t.tag !== tag).slice(0, 10);
+---
+
+<BaseLayout title={`分类：${tag}`} description={`南瓜镇中属于「${tag}」分类的文章，共 ${posts.length} 篇。`}>
+  <section class="wrap pt-12 md:pt-20 pb-8">
+    <nav class="mb-7">
+      <a
+        href="/tags"
+        class="group inline-flex items-center gap-1.5 font-sans text-[0.75rem] tracking-[0.08em] text-ink-faint hover:text-accent transition-colors"
+      >
+        <span class="transition-transform group-hover:-translate-x-0.5">←</span>
+        全部分类
+      </a>
+    </nav>
+
+    <div class="border-b border-ink/75 pb-3 flex items-end justify-between gap-4">
+      <div>
+        <p class="font-sans text-[0.68rem] tracking-[0.24em] uppercase text-ink-faint">
+          Tag
+        </p>
+        <h1 class="mt-1.5 font-serif text-[1.8rem] md:text-[2.3rem] font-semibold tracking-[0.04em] text-ink">
+          {tag}
+        </h1>
+      </div>
+      <span class="meta shrink-0 pb-1">{posts.length} 篇</span>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div>
+      {posts.map((post, i) => <PostRow post={post} index={i + 1} />)}
+    </div>
+
+    {
+      otherTags.length > 0 && (
+        <div class="mt-16 border-t border-rule pt-6">
+          <p class="meta mb-3">其他主题</p>
+          <div class="flex flex-wrap gap-1.5">
+            {otherTags.map(({ tag: t, count }) => (
+              <a href={`/tags/${encodeURIComponent(t)}`} class="tag-chip">
+                {t}
+                <span class="ml-1.5 opacity-50 tabular-nums">{count}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

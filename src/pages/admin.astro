@@ -1,0 +1,867 @@
+---
+/**
+ * 南瓜镇 · 本地后台
+ * ------------------------------------------------------------
+ * 纯前端 + File System Access API：浏览器直接读写你选的本地文件夹，
+ * 不使用任何服务端接口，因此构建产物是纯静态的（Vercel 免费版可直接托管）。
+ *
+ * 用法：
+ *   1. 本地 npm run dev，打开 http://localhost:4321/admin
+ *   2. 点「打开项目文件夹」，选择本项目的根目录（含 src/ 的那一层）
+ *   3. 之后即可增删改文章、上传图片，改动直接落到 src/content/posts 与 public/images
+ *
+ * 注意：只有 Chrome / Edge / Safari 16.4+ 支持；Firefox 不支持。
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="后台" description="南瓜镇内容管理" noindex>
+  <div id="app" class="wrap py-8 md:py-12">
+    <header class="flex flex-wrap items-center justify-between gap-3 border-b border-rule pb-4">
+      <div class="flex items-baseline gap-3">
+        <h1 class="font-serif text-xl font-semibold tracking-wider text-ink">南瓜镇 · 后台</h1>
+        <span id="folder-state" class="meta">未连接文件夹</span>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <a href="/" target="_blank" class="btn-ghost">查看站点 ↗</a>
+        <button id="btn-demo" class="btn-ghost">先看看界面</button>
+        <button id="btn-connect" class="btn-primary">打开项目文件夹</button>
+        <button id="btn-new" class="btn-primary hidden">＋ 新文章</button>
+      </div>
+    </header>
+
+    <!-- 引导 -->
+    <section id="intro" class="mt-10 border border-rule bg-white/40 p-6 md:p-8 max-w-3xl">
+      <h2 class="font-serif text-lg text-ink">三步开始</h2>
+      <ol class="mt-4 space-y-3 font-serif text-[0.92rem] leading-relaxed text-ink-soft list-decimal pl-5">
+        <li>点右上角 <strong class="text-ink">「打开项目文件夹」</strong>。</li>
+        <li>
+          在弹窗里选中本项目根目录（就是包含
+          <code class="font-mono text-[0.8rem] bg-paper-soft px-1">src</code> 和
+          <code class="font-mono text-[0.8rem] bg-paper-soft px-1">public</code>
+          的那一层），点「选择文件夹」，浏览器会要求一次写入授权，允许即可。
+        </li>
+        <li>之后就能在这里直接写、改、删文章，文件会同步保存到
+          <code class="font-mono text-[0.8rem] bg-paper-soft px-1">src/content/posts/</code>。
+        </li>
+      </ol>
+      <p class="mt-5 text-[0.8rem] leading-relaxed text-ink-faint">
+        全部在本地完成，内容不上传到任何服务器。推荐用 Chrome / Edge。
+        如果浏览器不支持（如 Firefox），请改用
+        <a href="#cli" class="text-accent underline underline-offset-2">命令行 / 手动编辑</a> 方式。
+      </p>
+      <p class="mt-3 text-[0.8rem] leading-relaxed text-ink-faint">
+        想先看看编辑器长什么样？点右上角
+        <strong class="text-ink-soft">「先看看界面」</strong>
+        可以进入演示模式（能看能试，不能保存）。
+      </p>
+    </section>
+
+    <div id="workspace" class="hidden mt-6 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
+      <!-- 列表 -->
+      <aside>
+        <input
+          id="search"
+          type="search"
+          placeholder="搜索标题…"
+          class="w-full text-sm px-2.5 py-1.5 bg-white/60 border border-rule focus:border-accent outline-none mb-2"
+        />
+        <ul id="list" class="space-y-1"></ul>
+        <p id="list-empty" class="hidden py-8 text-center text-sm text-ink-faint">还没有文章</p>
+      </aside>
+
+      <!-- 编辑区 -->
+      <section>
+        <div id="placeholder" class="border border-dashed border-rule py-24 text-center">
+          <p class="font-serif text-ink-faint">选择左侧文章，或新建一篇</p>
+        </div>
+
+        <form id="form" class="hidden space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-rule pb-3">
+            <span id="mode-label" class="meta">编辑中</span>
+            <div class="flex items-center gap-2">
+              <span id="status" class="text-xs"></span>
+              <button type="button" id="btn-delete" class="btn-danger">删除</button>
+              <button type="submit" class="btn-primary">保存到文件</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label class="field md:col-span-2">
+              <span>标题 *</span>
+              <input name="title" required class="input text-lg font-serif" />
+            </label>
+            <label class="field md:col-span-2">
+              <span>副标题</span>
+              <input name="subtitle" class="input" />
+            </label>
+            <label class="field md:col-span-2">
+              <span>摘要（列表与 SEO 使用）</span>
+              <textarea name="description" rows="2" class="input resize-y"></textarea>
+            </label>
+            <label class="field">
+              <span>文件名 / slug *</span>
+              <input name="file" required class="input font-mono text-sm" placeholder="2026-10-21-my-post.md" />
+            </label>
+            <label class="field">
+              <span>作者</span>
+              <input name="author" class="input" placeholder="NS" />
+            </label>
+            <label class="field">
+              <span>发布日</span>
+              <input name="pubDate" type="date" class="input" />
+            </label>
+            <label class="field">
+              <span>修订日（可空）</span>
+              <input name="updatedDate" type="date" class="input" />
+            </label>
+            <label class="field md:col-span-2">
+              <span>标签（逗号分隔）</span>
+              <input name="tags" class="input" placeholder="设计, 空间, 观察" />
+            </label>
+            <label class="field md:col-span-2">
+              <span>封面图（public 下的路径）</span>
+              <div class="flex gap-2">
+                <input name="cover" class="input font-mono text-sm flex-1" placeholder="/images/cover.jpg" />
+                <button type="button" id="btn-cover" class="btn-ghost shrink-0">上传</button>
+              </div>
+              <input name="coverAlt" class="input mt-2" placeholder="封面图的替代说明" />
+              <div id="cover-preview" class="mt-2 hidden">
+                <img class="h-28 w-auto border border-rule object-cover" alt="" />
+              </div>
+            </label>
+          </div>
+
+          <div class="flex flex-wrap gap-5 pt-1">
+            <label class="check"><input type="checkbox" name="featured" /> 首页大图</label>
+            <label class="check"><input type="checkbox" name="pinned" /> 置顶</label>
+            <label class="check"><input type="checkbox" name="draft" /> 草稿（不显示）</label>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs tracking-wider text-ink-soft">正文（Markdown）</span>
+              <div class="flex items-center gap-2">
+                <span id="word-count" class="meta"></span>
+                <button type="button" id="btn-upload" class="btn-ghost text-[0.7rem] py-0.5">插入图片</button>
+                <button type="button" id="btn-preview" class="btn-ghost text-[0.7rem] py-0.5 xl:hidden">预览</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-3">
+              <textarea
+                name="body"
+                id="body"
+                rows="26"
+                spellcheck="false"
+                class="input font-mono text-[0.82rem] leading-[1.75] resize-y"
+                placeholder="在这里写正文…&#10;&#10;支持 Markdown：## 标题、**加粗**、> 引用、- 列表&#10;图片：![图注](/images/a.jpg)&#10;&#10;可拖拽图片到此处直接上传。"
+              ></textarea>
+              <div
+                id="preview"
+                class="prose hidden xl:block border border-rule bg-white/40 p-5 overflow-auto max-h-[46rem] text-[0.9rem]"
+              ></div>
+            </div>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <input type="file" id="file-input" accept="image/*" class="hidden" />
+
+    <footer class="mt-12 pt-4 border-t border-rule space-y-1">
+      <p class="meta">文章 → src/content/posts/ · 图片 → public/images/ · 保存后刷新页面即可看到效果</p>
+      <p class="meta">发布：git add . && git commit -m "post" && git push（Vercel 会自动重新部署）</p>
+    </footer>
+  </div>
+</BaseLayout>
+
+<style>
+  .btn-primary {
+    font-family: var(--font-sans-cn);
+    font-size: 0.8rem;
+    padding: 0.45rem 0.9rem;
+    background-color: var(--color-ink);
+    color: var(--color-paper);
+    transition: background-color 0.2s;
+  }
+  .btn-primary:hover {
+    background-color: var(--color-accent);
+  }
+  .btn-ghost {
+    font-family: var(--font-sans-cn);
+    font-size: 0.8rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--color-rule);
+    color: var(--color-ink-soft);
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  .btn-danger {
+    font-family: var(--font-sans-cn);
+    font-size: 0.8rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid #d9b3a8;
+    color: #a8471f;
+    transition: all 0.2s;
+  }
+  .btn-danger:hover {
+    background-color: #a8471f;
+    color: #fff;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .field > span {
+    font-family: var(--font-sans-cn);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-soft);
+  }
+  .input {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.88rem;
+    background-color: rgba(255, 255, 255, 0.55);
+    border: 1px solid var(--color-rule);
+    color: var(--color-ink);
+    outline: none;
+  }
+  .input:focus {
+    border-color: var(--color-accent);
+    background-color: #fff;
+  }
+  .check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+    cursor: pointer;
+  }
+  .check input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: #a8471f;
+  }
+  .post-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.55rem 0.65rem;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .post-item:hover {
+    background-color: color-mix(in srgb, var(--color-ink) 5%, transparent);
+  }
+  .post-item.active {
+    border-left-color: var(--color-accent);
+    background-color: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  }
+</style>
+
+<script>
+  import { marked } from 'marked';
+
+  /* ============ 类型 ============ */
+  type FsDir = FileSystemDirectoryHandle;
+  type Post = {
+    file: string;
+    title: string;
+    subtitle: string;
+    description: string;
+    pubDate: string;
+    updatedDate: string;
+    author: string;
+    tags: string[];
+    cover: string;
+    coverAlt: string;
+    draft: boolean;
+    pinned: boolean;
+    featured: boolean;
+    body: string;
+    raw: Record<string, unknown>;
+  };
+
+  const $ = <T extends HTMLElement>(s: string) => document.querySelector(s) as T;
+  const form = $<HTMLFormElement>('#form');
+  const listEl = $<HTMLUListElement>('#list');
+  const placeholder = $('#placeholder');
+  const modeLabel = $('#mode-label');
+  const statusEl = $('#status');
+  const previewEl = $('#preview');
+  const bodyEl = $<HTMLTextAreaElement>('#body');
+  const fileInput = $<HTMLInputElement>('#file-input');
+  const folderState = $('#folder-state');
+
+  let root: FsDir | null = null;
+  let posts: Post[] = [];
+  let activeFile: string | null = null;
+  let dirty = false;
+  let uploadTarget: 'cover' | 'inline' = 'inline';
+  let images = new Map<string, string>(); // 文件名 -> objectURL（预览用）
+
+  const POSTS_DIR = ['src', 'content', 'posts'];
+  const IMAGES_DIR = ['public', 'images'];
+
+  const hasFS = 'showDirectoryPicker' in window;
+
+  /* ============ 目录操作 ============ */
+
+  async function pickRoot() {
+    if (!hasFS) {
+      alert('当前浏览器不支持文件夹访问。请使用 Chrome / Edge，或直接手动编辑 Markdown 文件。');
+      return;
+    }
+    try {
+      // @ts-expect-error — File System Access API
+      root = await window.showDirectoryPicker({ id: 'nanguazhen', mode: 'readwrite' });
+      // 校验目录结构
+      try {
+        await root!.getDirectoryHandle('src');
+      } catch {
+        alert('这个文件夹里没有 src 目录。请选择项目根目录（包含 src/ 和 public/ 的那一层）。');
+        root = null;
+        return;
+      }
+      folderState.textContent = `已连接：${root!.name}`;
+      $('#intro').classList.add('hidden');
+      $('#workspace').classList.remove('hidden');
+      $('#btn-new').classList.remove('hidden');
+      // 记住句柄（下次打开免选，但仍需授权）
+      const idb = await openDB();
+      await idb.put('handle', root);
+      await loadAll();
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') console.error(e);
+    }
+  }
+
+  async function ensurePerm(dir: FsDir, write = true) {
+    const opts = { mode: write ? 'readwrite' : 'read' } as any;
+    // @ts-expect-error
+    if ((await dir.queryPermission(opts)) === 'granted') return true;
+    // @ts-expect-error
+    return (await dir.requestPermission(opts)) === 'granted';
+  }
+
+  async function getDir(pathParts: string[], create = false): Promise<FsDir> {
+    let d = root!;
+    for (const p of pathParts) d = await d.getDirectoryHandle(p, { create });
+    return d;
+  }
+
+  /* ============ frontmatter ============ */
+
+  function splitFrontmatter(src: string) {
+    const m = src.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+    if (!m) return { data: {} as Record<string, any>, body: src };
+    const data: Record<string, any> = {};
+    let key: string | null = null;
+    let arr: string[] | null = null;
+
+    for (const rawLine of m[1].split(/\r?\n/)) {
+      const line = rawLine.replace(/\s+$/, '');
+      if (!line.trim() || line.trim().startsWith('#')) continue;
+
+      const itemMatch = line.match(/^\s+-\s+(.*)$/) || line.match(/^-\s+(.*)$/);
+      if (itemMatch && key) {
+        arr ??= [];
+        arr.push(unquote(itemMatch[1]));
+        data[key] = arr;
+        continue;
+      }
+
+      const kv = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+      if (kv) {
+        key = kv[1];
+        arr = null;
+        const v = kv[2].trim();
+        if (v.startsWith('[') && v.endsWith(']')) {
+          const inner = v.slice(1, -1).trim();
+          data[key] = inner ? inner.split(',').map((s) => unquote(s)) : [];
+          arr = data[key];
+        } else if (v === '') {
+          data[key] = '';
+        } else {
+          data[key] = coerce(unquote(v));
+        }
+      }
+    }
+    for (const k of Object.keys(data)) if (data[k] === '') delete data[k];
+    return { data, body: src.slice(m[0].length) };
+  }
+
+  function unquote(v: string) {
+    let s = v.trim();
+    if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'")))
+      s = s.slice(1, -1);
+    return s;
+  }
+
+  function coerce(v: string): any {
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+    if (/^-?\d+(\.\d+)?$/.test(v)) return Number(v);
+    return v;
+  }
+
+  const NEEDS_QUOTE = /[:#\[\]{}&*!|>'"%@`,]|^\s|\s$|^[-?]/;
+  function yamlValue(v: any): string {
+    if (typeof v === 'boolean' || typeof v === 'number') return String(v);
+    const s = String(v);
+    if (s === '') return '""';
+    if (NEEDS_QUOTE.test(s)) return `"${s.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+    return s;
+  }
+
+  function buildFile(data: Record<string, any>, body: string) {
+    const order = [
+      'title', 'subtitle', 'description', 'pubDate', 'updatedDate', 'author',
+      'tags', 'cover', 'coverAlt', 'draft', 'pinned', 'featured', 'slug',
+    ];
+    const keys = [...order.filter((k) => data[k] !== undefined), ...Object.keys(data).filter((k) => !order.includes(k))];
+    const lines = ['---'];
+    for (const k of keys) {
+      const v = data[k];
+      if (v === undefined || v === null || v === '') continue;
+      if (Array.isArray(v)) {
+        if (v.length === 0) continue;
+        lines.push(`${k}:`);
+        v.forEach((i) => lines.push(`  - ${yamlValue(i)}`));
+      } else {
+        lines.push(`${k}: ${yamlValue(v)}`);
+      }
+    }
+    lines.push('---', '');
+    return lines.join('\n') + body.replace(/^\n+/, '');
+  }
+
+  /* ============ 读取全部文章 ============ */
+
+  async function loadAll() {
+    if (!root) return;
+    await ensurePerm(root);
+    posts = [];
+    images.clear();
+
+    const dir = await getDir(POSTS_DIR);
+    for await (const [name, handle] of (dir as any).entries()) {
+      if (!/\.(md|mdx)$/i.test(name)) continue;
+      const file = await (handle as FileSystemFileHandle).getFile();
+      const src = await file.text();
+      const { data, body } = splitFrontmatter(src);
+      posts.push({
+        file: name,
+        title: String(data.title ?? ''),
+        subtitle: String(data.subtitle ?? ''),
+        description: String(data.description ?? ''),
+        pubDate: String(data.pubDate ?? '').slice(0, 10),
+        updatedDate: String(data.updatedDate ?? '').slice(0, 10),
+        author: String(data.author ?? 'NS'),
+        tags: Array.isArray(data.tags) ? data.tags : [],
+        cover: String(data.cover ?? ''),
+        coverAlt: String(data.coverAlt ?? ''),
+        draft: data.draft === true,
+        pinned: data.pinned === true,
+        featured: data.featured === true,
+        body,
+        raw: data,
+      });
+    }
+
+    posts.sort((a, b) => (a.pubDate < b.pubDate ? 1 : -1));
+
+    // 读取图片，用于封面预览
+    try {
+      const imgDir = await getDir(IMAGES_DIR);
+      for await (const [name, handle] of (imgDir as any).entries()) {
+        if (!/\.(jpe?g|png|webp|gif|avif|svg)$/i.test(name)) continue;
+        const f = await (handle as FileSystemFileHandle).getFile();
+        images.set(name, URL.createObjectURL(f));
+      }
+    } catch { /* public/images 可能为空 */ }
+
+    renderList();
+    updateFolderMeta();
+  }
+
+  function updateFolderMeta() {
+    folderState.textContent = `已连接：${root?.name ?? ''} · ${posts.length} 篇`;
+  }
+
+  function renderList() {
+    const q = $<HTMLInputElement>('#search').value.trim().toLowerCase();
+    const list = q
+      ? posts.filter((p) => p.title.toLowerCase().includes(q) || p.file.toLowerCase().includes(q))
+      : posts;
+
+    listEl.innerHTML = list
+      .map(
+        (p) => `
+        <li>
+          <button type="button" class="post-item ${p.file === activeFile ? 'active' : ''}" data-file="${attr(p.file)}">
+            <span class="block font-serif text-[0.9rem] leading-snug text-ink truncate">${html(p.title || '(无标题)')}</span>
+            <span class="mt-0.5 flex items-center gap-2 text-[0.66rem] text-ink-faint font-sans tabular-nums">
+              <span>${p.pubDate || '—'}</span>
+              ${p.draft ? '<span class="text-accent">草稿</span>' : ''}
+              ${p.pinned ? '<span>置顶</span>' : ''}
+            </span>
+          </button>
+        </li>`
+      )
+      .join('');
+    $('#list-empty').classList.toggle('hidden', list.length > 0);
+    listEl.querySelectorAll<HTMLButtonElement>('.post-item').forEach((b) =>
+      b.addEventListener('click', () => openPost(b.dataset.file!))
+    );
+  }
+
+  /* ============ 编辑器 ============ */
+
+  function openPost(file: string) {
+    if (dirty && !confirm('当前有未保存的修改，确定离开？')) return;
+    const p = posts.find((x) => x.file === file);
+    if (!p) return;
+    activeFile = file;
+    placeholder.classList.add('hidden');
+    form.classList.remove('hidden');
+    modeLabel.textContent = `编辑：${file}`;
+    fillForm(p);
+    renderList();
+  }
+
+  function fillForm(p: Post | null) {
+    const f = form.elements as any;
+    f.title.value = p?.title ?? '';
+    f.subtitle.value = p?.subtitle ?? '';
+    f.description.value = p?.description ?? '';
+    f.file.value = p?.file ?? suggestFilename();
+    f.author.value = p?.author ?? 'NS';
+    f.pubDate.value = p?.pubDate || today();
+    f.updatedDate.value = p?.updatedDate ?? '';
+    f.tags.value = (p?.tags ?? []).join(', ');
+    f.cover.value = p?.cover ?? '';
+    f.coverAlt.value = p?.coverAlt ?? '';
+    f.featured.checked = p?.featured ?? false;
+    f.pinned.checked = p?.pinned ?? false;
+    f.draft.checked = p?.draft ?? false;
+    bodyEl.value = p?.body ?? '';
+    updateCoverPreview(f.cover.value);
+    updateCount();
+    renderPreview();
+    dirty = false;
+  }
+
+  function today() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  function suggestFilename() {
+    return `${today()}-untitled.md`;
+  }
+
+  function updateCoverPreview(url: string) {
+    const wrap = $('#cover-preview');
+    const img = wrap.querySelector('img') as HTMLImageElement;
+    const name = url.split('/').pop() ?? '';
+    if (images.has(name)) {
+      img.src = images.get(name)!;
+      wrap.classList.remove('hidden');
+    } else if (url) {
+      img.src = url;
+      wrap.classList.remove('hidden');
+    } else {
+      wrap.classList.add('hidden');
+    }
+  }
+
+  function updateCount() {
+    const t = bodyEl.value.replace(/```[\s\S]*?```/g, '');
+    const cjk = (t.match(/[\u4e00-\u9fa5]/g) || []).length;
+    const w = (t.match(/[a-zA-Z0-9]+/g) || []).length;
+    $('#word-count').textContent = `${cjk + w} 字 · 约 ${Math.max(1, Math.round((cjk + w * 1.6) / 400))} 分钟`;
+  }
+
+  function renderPreview() {
+    previewEl.innerHTML = marked.parse(bodyEl.value, { gfm: true }) as string;
+  }
+
+  function setStatus(msg: string, ok = true) {
+    statusEl.textContent = msg;
+    statusEl.className = ok ? 'text-xs text-emerald-700' : 'text-xs text-[#a8471f]';
+    if (ok) setTimeout(() => (statusEl.textContent = ''), 3000);
+  }
+
+  /* ============ 保存 / 删除 ============ */
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (demoMode) {
+      setStatus('演示模式：不能保存。点右上角「打开项目文件夹」后即可真正保存。', false);
+      return;
+    }
+    if (!root) return;
+    const f = form.elements as any;
+    const file = f.file.value.trim();
+    if (!/^[^\\/:*?"<>|]+\.(md|mdx)$/i.test(file)) {
+      return setStatus('文件名不合法（不要带路径，需以 .md 结尾）', false);
+    }
+
+    const data: Record<string, any> = {
+      ...(posts.find((p) => p.file === activeFile)?.raw ?? {}),
+      title: f.title.value.trim(),
+      subtitle: f.subtitle.value.trim() || undefined,
+      description: f.description.value.trim() || undefined,
+      pubDate: f.pubDate.value || today(),
+      updatedDate: f.updatedDate.value || undefined,
+      author: f.author.value.trim() || 'NS',
+      tags: f.tags.value.split(/[,，]/).map((s: string) => s.trim()).filter(Boolean),
+      cover: f.cover.value.trim() || undefined,
+      coverAlt: f.coverAlt.value.trim() || undefined,
+      draft: f.draft.checked,
+      pinned: f.pinned.checked,
+      featured: f.featured.checked,
+    };
+
+    try {
+      const dir = await getDir(POSTS_DIR, true);
+      // 改名：先写新文件，再删旧文件
+      const newName = file.replace(/\.(md|mdx)$/, '.md');
+      const handle = await dir.getFileHandle(newName, { create: true });
+      const w = await handle.createWritable();
+      await w.write(buildFile(data, bodyEl.value));
+      await w.close();
+
+      if (activeFile && activeFile !== newName) {
+        try { await dir.removeEntry(activeFile); } catch {}
+      }
+
+      activeFile = newName;
+      dirty = false;
+      setStatus('已保存到文件');
+      modeLabel.textContent = `编辑：${newName}`;
+      (form.elements as any).file.value = newName;
+      await loadAll();
+    } catch (err) {
+      console.error(err);
+      setStatus(`保存失败：${(err as Error).message}`, false);
+    }
+  });
+
+  $('#btn-delete').addEventListener('click', async () => {
+    if (!root || !activeFile) return;
+    const t = (form.elements as any).title.value;
+    if (!confirm(`确定删除《${t}》？\n\n会直接删除 src/content/posts/${activeFile}`)) return;
+    try {
+      const dir = await getDir(POSTS_DIR);
+      await dir.removeEntry(activeFile);
+      activeFile = null;
+      form.classList.add('hidden');
+      placeholder.classList.remove('hidden');
+      await loadAll();
+      setStatus('已删除');
+    } catch (err) {
+      setStatus(`删除失败：${(err as Error).message}`, false);
+    }
+  });
+
+  /* ============ 新建 ============ */
+
+  $('#btn-new').addEventListener('click', () => {
+    if (dirty && !confirm('当前有未保存的修改，确定新建？')) return;
+    activeFile = null;
+    placeholder.classList.add('hidden');
+    form.classList.remove('hidden');
+    modeLabel.textContent = '新建文章';
+    fillForm(null);
+    (form.elements as any).title.focus();
+  });
+
+  /* ============ 图片上传 ============ */
+
+  async function upload(file: File) {
+    if (!root) return;
+    try {
+      setStatus('上传中…');
+      const dir = await getDir(IMAGES_DIR, true);
+      const ext = (file.name.match(/\.[^.]+$/) || ['.jpg'])[0].toLowerCase();
+      const stem = file.name
+        .replace(/\.[^.]+$/, '')
+        .replace(/[^\w\u4e00-\u9fa5.-]/g, '-')
+        .slice(0, 50);
+      const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+      const name = `${stamp}-${stem}${ext}`;
+
+      const handle = await dir.getFileHandle(name, { create: true });
+      const w = await handle.createWritable();
+      await w.write(file);
+      await w.close();
+
+      const url = `/images/${name}`;
+      images.set(name, URL.createObjectURL(file));
+
+      if (uploadTarget === 'cover') {
+        (form.elements as any).cover.value = url;
+        updateCoverPreview(url);
+      } else {
+        insertAtCursor(`\n![${stem}](${url})\n`);
+      }
+      setStatus('图片已保存到 public/images');
+    } catch (err) {
+      setStatus(`上传失败：${(err as Error).message}`, false);
+    }
+  }
+
+  function insertAtCursor(text: string) {
+    const s = bodyEl.selectionStart;
+    const e = bodyEl.selectionEnd;
+    bodyEl.value = bodyEl.value.slice(0, s) + text + bodyEl.value.slice(e);
+    bodyEl.selectionStart = bodyEl.selectionEnd = s + text.length;
+    bodyEl.focus();
+    updateCount();
+    renderPreview();
+    dirty = true;
+  }
+
+  $('#btn-upload').addEventListener('click', () => { uploadTarget = 'inline'; fileInput.click(); });
+  $('#btn-cover').addEventListener('click', () => { uploadTarget = 'cover'; fileInput.click(); });
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files?.[0];
+    if (f) upload(f);
+    fileInput.value = '';
+  });
+
+  bodyEl.addEventListener('paste', (e) => {
+    const item = Array.from(e.clipboardData?.items ?? []).find((i) => i.type.startsWith('image/'));
+    const f = item?.getAsFile();
+    if (f) { e.preventDefault(); uploadTarget = 'inline'; upload(f); }
+  });
+  bodyEl.addEventListener('dragover', (e) => { e.preventDefault(); bodyEl.style.borderColor = '#a8471f'; });
+  bodyEl.addEventListener('dragleave', () => { bodyEl.style.borderColor = ''; });
+  bodyEl.addEventListener('drop', (e) => {
+    e.preventDefault();
+    bodyEl.style.borderColor = '';
+    const f = e.dataTransfer?.files?.[0];
+    if (f?.type.startsWith('image/')) { uploadTarget = 'inline'; upload(f); }
+  });
+
+  /* ============ 其它 ============ */
+
+  bodyEl.addEventListener('input', () => {
+    dirty = true;
+    updateCount();
+    clearTimeout((window as any)._pv);
+    (window as any)._pv = setTimeout(renderPreview, 280);
+  });
+  form.addEventListener('input', () => (dirty = true));
+  $<HTMLInputElement>('#search').addEventListener('input', renderList);
+  $('#btn-preview').addEventListener('click', () => previewEl.classList.toggle('hidden'));
+  (form.elements as any).cover.addEventListener('input', (e: Event) =>
+    updateCoverPreview((e.target as HTMLInputElement).value)
+  );
+  window.addEventListener('beforeunload', (e) => {
+    if (dirty) { e.preventDefault(); e.returnValue = ''; }
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); form.requestSubmit(); }
+  });
+
+  $('#btn-connect').addEventListener('click', pickRoot);
+
+  /* ============ 演示模式 ============ */
+  let demoMode = false;
+
+  $('#btn-demo').addEventListener('click', () => {
+    demoMode = true;
+    const demoPost: Post = {
+      file: '2026-10-21-demo.md',
+      title: '欢迎来到南瓜镇（演示文章）',
+      subtitle: '这是一个演示，随便点点看看',
+      description: '演示模式下可以试用所有编辑功能，但不能保存。连接文件夹后就能真正写文章了。',
+      pubDate: today(),
+      updatedDate: '',
+      author: 'NS',
+      tags: ['演示'],
+      cover: '',
+      coverAlt: '',
+      draft: false,
+      pinned: false,
+      featured: false,
+      body: `## 这里就是正文编辑区
+
+左边写 Markdown，右边实时显示排版效果（大屏幕上）。
+
+**加粗**就是这样点的——不，这里没有按钮，Markdown 用两个星号包住文字：\`**加粗**\`。
+
+> 这是引用。写法是行首一个 > 号。
+
+### 常用写法速查
+
+- 列表：行首一个 - 号
+- 图片：![图注](/images/图片名.jpg)（或点上方「插入图片」按钮）
+- 链接：[文字](https://example.com)
+
+写完点「保存到文件」就能发布（演示模式除外）。
+
+试试拖一张图片进来，或者直接 Ctrl+V 粘贴截图。`,
+      raw: {},
+    };
+
+    folderState.textContent = '演示模式（未连接文件夹）';
+    $('#intro').classList.add('hidden');
+    $('#workspace').classList.remove('hidden');
+    $('#btn-new').classList.remove('hidden');
+    placeholder.classList.add('hidden');
+    form.classList.remove('hidden');
+    modeLabel.textContent = '演示文章（不能保存）';
+    fillForm(demoPost);
+    renderList();
+  });
+
+  /* 记住上次的目录句柄，刷新后自动尝试恢复 */
+  function openDB(): Promise<IDBDatabase> {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open('nanguazhen-admin', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('kv');
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  }
+
+  async function restoreHandle() {
+    try {
+      const db = await openDB();
+      const h = await new Promise<FsDir | undefined>((res) => {
+        const tx = db.transaction('kv', 'readonly');
+        const r = tx.objectStore('kv').get('handle');
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => res(undefined);
+      });
+      if (!h) return;
+      // @ts-expect-error
+      const perm = await h.queryPermission({ mode: 'readwrite' });
+      if (perm === 'granted') {
+        root = h;
+        folderState.textContent = `已连接：${root!.name}`;
+        $('#intro').classList.add('hidden');
+        $('#workspace').classList.remove('hidden');
+        $('#btn-new').classList.remove('hidden');
+        await loadAll();
+      }
+    } catch { /* 忽略 */ }
+  }
+
+  function html(s: string) {
+    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  }
+  function attr(s: string) { return html(s); }
+
+  restoreHandle();
+</script>

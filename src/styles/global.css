@@ -1,0 +1,449 @@
+@import 'tailwindcss';
+
+/* ==========================================================================
+   南瓜镇 · 设计变量
+   主色：纯色背景 #f4ede9，墨色文字，暖棕强调色
+   ========================================================================== */
+@theme {
+  --color-paper: #f4ede9;
+  --color-paper-soft: #efe6e0;
+  --color-ink: #241a16;
+  --color-ink-soft: #5a4a42;
+  --color-ink-faint: #8b7870;
+  --color-rule: #d8c9c0;
+  --color-accent: #a8471f;
+  --color-accent-soft: #c96a3f;
+
+  --font-serif-cn: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'SimSun',
+    'STSong', serif;
+  --font-sans-cn: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui,
+    sans-serif;
+  --font-mono-cn: 'JetBrains Mono', 'SFMono-Regular', 'Courier New', monospace;
+
+  --breakpoint-prose: 44rem;
+}
+
+/* ==========================================================================
+   本地字体（放在 public/fonts/，无外部请求）
+   未放置字体文件时自动回退到系统字体，不会报错。
+   ========================================================================== */
+@font-face {
+  font-family: 'Noto Serif SC';
+  src: url('/fonts/NotoSerifSC-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  /* 中文字体文件较大，限制在常用字范围内优先加载 */
+  unicode-range: U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  src: url('/fonts/NotoSerifSC-Bold.woff2') format('woff2');
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+3000-303F, U+3400-4DBF, U+4E00-9FFF, U+FF00-FFEF;
+}
+
+/* ==========================================================================
+   基础
+   ========================================================================== */
+@layer base {
+  html {
+    font-size: clamp(1.0625rem, 0.55vw + 0.92rem, 1.1875rem); /* 17px → 19px */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-serif-cn);
+    line-height: 1.75;
+    /* 中文排版：标点挤压 + 优先均衡断行 */
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+
+  a {
+    color: inherit;
+    text-underline-offset: 0.28em;
+    text-decoration-thickness: 1px;
+  }
+
+  /* 键盘可达性 */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  img,
+  video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px dashed var(--color-rule);
+  }
+}
+
+/* ==========================================================================
+   工具类
+   ========================================================================== */
+@utility wrap {
+  width: 100%;
+  max-width: 60rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (min-width: 768px) {
+    padding-inline: 2.5rem;
+  }
+}
+
+@utility wrap-narrow {
+  width: 100%;
+  max-width: 44rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (min-width: 768px) {
+    padding-inline: 2rem;
+  }
+}
+
+@utility meta {
+  font-family: var(--font-sans-cn);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 下划线幻影动画（列表标题 hover） */
+@utility link-underline {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1.5px;
+  transition: text-decoration-color 0.25s ease;
+  &:hover {
+    text-decoration-color: var(--color-accent);
+  }
+}
+
+/* 标签胶囊 */
+@utility tag-chip {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-sans-cn);
+  font-size: 0.7rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  padding: 0.4em 0.65em 0.45em;
+  border: 1px solid var(--color-rule);
+  color: var(--color-ink-soft);
+  border-radius: 999px;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+  &:hover {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-paper);
+  }
+}
+
+/* ==========================================================================
+   文章正文排版（prose）
+   只在 markdown 内容区生效，不污染全站
+   ========================================================================== */
+.prose {
+  font-size: 1rem;
+  line-height: 1.95;
+  color: var(--color-ink);
+  letter-spacing: 0.012em;
+  text-align: justify;
+  text-justify: inter-ideograph;
+
+  & > * + * {
+    margin-top: 1.35em;
+  }
+
+  p {
+    margin-block: 0;
+    text-indent: 2em;
+  }
+
+  /* 图片段落、标题后首段不缩进 */
+  h2 + p,
+  h3 + p,
+  h4 + p,
+  blockquote p,
+  li > p,
+  figure p,
+  p:has(> img:only-child) {
+    text-indent: 0;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: 600;
+    line-height: 1.45;
+    text-align: left;
+    color: var(--color-ink);
+    text-wrap: balance;
+    scroll-margin-top: 6rem;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    margin-top: 2.2em;
+  }
+  h2 {
+    font-size: 1.35rem;
+    margin-top: 2.4em;
+    margin-bottom: -0.4em;
+  }
+  h3 {
+    font-size: 1.15rem;
+    margin-top: 2em;
+  }
+  h4 {
+    font-size: 1rem;
+    margin-top: 1.8em;
+    color: var(--color-ink-soft);
+  }
+
+  /* h2 左侧的小竖线 */
+  h2::before {
+    content: '';
+    display: inline-block;
+    width: 0.28em;
+    height: 0.82em;
+    margin-right: 0.5em;
+    background-color: var(--color-accent);
+    vertical-align: -0.02em;
+  }
+
+  a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-decoration-color: color-mix(
+      in srgb,
+      var(--color-accent) 35%,
+      transparent
+    );
+    transition: text-decoration-color 0.2s ease;
+    &:hover {
+      text-decoration-color: var(--color-accent);
+    }
+  }
+
+  strong {
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  em {
+    font-style: italic;
+    color: var(--color-ink-soft);
+  }
+
+  /* 列表 */
+  ul,
+  ol {
+    padding-left: 1.5em;
+    margin-block: 1.1em;
+  }
+  ul {
+    list-style: '·  ';
+  }
+  ol {
+    list-style: decimal;
+  }
+  li {
+    margin-block: 0.45em;
+    padding-left: 0.2em;
+  }
+  li::marker {
+    color: var(--color-ink-faint);
+  }
+
+  /* 引用 */
+  blockquote {
+    margin-block: 1.8em;
+    padding: 0.1em 0 0.1em 1.2em;
+    border-left: 2px solid var(--color-accent-soft);
+    color: var(--color-ink-soft);
+    font-style: normal;
+  }
+  blockquote p {
+    text-align: left;
+  }
+
+  /* 图片：响应式 + 延迟加载（由 markdown 渲染附加） */
+  img {
+    display: block;
+    margin-inline: auto;
+    border-radius: 2px;
+    height: auto;
+    max-width: 100%;
+    background-color: var(--color-paper-soft);
+  }
+
+  figure {
+    margin-block: 2em;
+  }
+  figcaption {
+    margin-top: 0.7em;
+    font-family: var(--font-sans-cn);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--color-ink-faint);
+    text-align: center;
+    text-indent: 0;
+  }
+
+  /* 代码 */
+  code {
+    font-family: var(--font-mono-cn);
+    font-size: 0.86em;
+    background-color: color-mix(in srgb, var(--color-ink) 7%, transparent);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    white-space: break-spaces;
+  }
+  pre {
+    margin-block: 1.8em;
+    padding: 1.1em 1.25em;
+    border-radius: 4px;
+    overflow-x: auto;
+    border: 1px solid var(--color-rule);
+    background-color: #fbf7f4;
+    font-size: 0.84rem;
+    line-height: 1.7;
+    tab-size: 2;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    font-size: inherit;
+    white-space: pre;
+  }
+  /* Shiki 双主题 */
+  .astro-code,
+  .astro-code span {
+    background-color: transparent !important;
+  }
+
+  /* 表格 */
+  table {
+    width: 100%;
+    margin-block: 1.9em;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+    font-family: var(--font-sans-cn);
+    display: block;
+    overflow-x: auto;
+  }
+  th,
+  td {
+    border-bottom: 1px solid var(--color-rule);
+    padding: 0.6em 0.8em;
+    text-align: left;
+  }
+  th {
+    font-weight: 600;
+    color: var(--color-ink-soft);
+    border-bottom-width: 1px;
+  }
+
+  hr {
+    margin-block: 3em;
+  }
+
+  /* 脚注 */
+  .footnotes {
+    margin-top: 3.5em;
+    padding-top: 1.2em;
+    border-top: 1px solid var(--color-rule);
+    font-size: 0.85rem;
+    color: var(--color-ink-soft);
+  }
+  .footnotes p {
+    text-indent: 0;
+  }
+
+  /* 任务列表 */
+  input[type='checkbox'] {
+    margin-right: 0.4em;
+    accent-color: var(--color-accent);
+  }
+}
+
+/* 手机上正文略收一点行高，避免过于松散 */
+@media (max-width: 640px) {
+  .prose {
+    line-height: 1.88;
+  }
+  .prose p {
+    text-indent: 1.8em;
+  }
+}
+
+/* ==========================================================================
+   入场动画（极轻）
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-up {
+    animation: fadeUp 0.55s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+  .fade-up-1 {
+    animation-delay: 0.06s;
+  }
+  .fade-up-2 {
+    animation-delay: 0.12s;
+  }
+  .fade-up-3 {
+    animation-delay: 0.18s;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 打印 */
+@media print {
+  body {
+    background: #fff;
+  }
+  header nav,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+  .prose {
+    font-size: 11pt;
+  }
+}

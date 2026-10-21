@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostRow from '../components/PostRow.astro';
+import Pagination from '../components/Pagination.astro';
+import { getPosts } from '../lib/content';
+import { SITE } from '../consts';
+import { collectTags } from '../lib/utils';
+
+const all = await getPosts();
+const tags = collectTags(all).slice(0, 14);
+
+const pageSize = SITE.postsPerPage;
+const lead = all[0];
+const rest = all.slice(1);
+const firstBatch = rest.slice(0, pageSize);
+const totalPages = Math.max(1, Math.ceil(rest.length / pageSize));
+---
+
+<BaseLayout description={SITE.description}>
+  <!-- 标签速览 -->
+  {
+    tags.length > 0 && (
+      <section class="wrap pt-10 md:pt-14">
+        <div class="flex items-baseline gap-3 border-b border-rule pb-4">
+          <span class="meta shrink-0 mt-1.5">主题</span>
+          <div class="flex flex-wrap gap-1.5">
+            {tags.map(({ tag, count }) => (
+              <a href={`/tags/${encodeURIComponent(tag)}`} class="tag-chip">
+                {tag}
+                <span class="ml-1.5 opacity-50 tabular-nums">{count}</span>
+              </a>
+            ))}
+            <a
+              href="/tags"
+              class="inline-flex items-center px-1.5 py-1 font-sans text-[0.7rem] text-ink-faint hover:text-accent transition-colors"
+            >
+              全部 →
+            </a>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- 文章列表：一行一篇 -->
+  <section class="wrap pt-6 pb-4">
+    <div class="flex items-baseline justify-between border-b border-ink/75 pb-2.5">
+      <h2 class="font-sans text-[0.7rem] tracking-[0.26em] uppercase text-ink">
+        最新
+      </h2>
+      <span class="meta">共 {all.length} 篇</span>
+    </div>
+
+    {
+      all.length === 0 ? (
+        <div class="py-24 text-center">
+          <p class="font-serif text-ink-faint">还没有文章。</p>
+          <p class="mt-2 meta">在 src/content/posts/ 里新建一个 .md 文件即可开始。</p>
+        </div>
+      ) : (
+        <div>
+          {lead && <PostRow post={lead} featured index={1} />}
+          {firstBatch.map((post, i) => (
+            <PostRow post={post} index={i + 2} />
+          ))}
+        </div>
+      )
+    }
+
+    {
+      all.length > 0 && (
+        <Pagination
+          currentPage={1}
+          totalPages={totalPages}
+          base="/articles"
+        />
+      )
+    }
+  </section>
+
+  <!-- 底部题记 -->
+  <section class="wrap mt-16 md:mt-24 pb-4">
+    <div class="max-w-xl mx-auto text-center border-t border-rule pt-10">
+      <p class="font-serif text-[0.92rem] leading-[2] text-ink-soft">
+        写下即遗忘，重读才是记得。
+      </p>
+    </div>
+  </section>
+</BaseLayout>

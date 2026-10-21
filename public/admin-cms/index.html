@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>南瓜镇 · 内容管理</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style>
+      body {
+        margin: 0;
+        background: #f4ede9;
+        font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        color: #241a16;
+      }
+      #tip {
+        max-width: 34rem;
+        margin: 12vh auto;
+        padding: 2rem;
+        border: 1px solid #d8c9c0;
+        line-height: 1.9;
+        font-size: 0.92rem;
+      }
+      #tip h1 {
+        font-family: 'Songti SC', 'SimSun', serif;
+        font-size: 1.3rem;
+        letter-spacing: 0.1em;
+        margin: 0 0 0.8rem;
+      }
+      #tip code {
+        background: #efe6e0;
+        padding: 0.1em 0.35em;
+        font-size: 0.85em;
+      }
+      #tip a {
+        color: #a8471f;
+      }
+      #tip p {
+        margin: 0.6rem 0;
+      }
+      #tip .muted {
+        color: #8b7870;
+        font-size: 0.82rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="tip">
+      <h1>内容管理后台</h1>
+      <p>正在加载…</p>
+      <p class="muted">
+        如果长时间停在这里，多半是还没配置 OAuth。请按
+        <a href="https://github.com/ns1900/nanguazhen/blob/main/docs/CMS-SETUP.md">docs/CMS-SETUP.md</a>
+        完成三步配置，并确认 <code>config.yml</code> 已存在。
+      </p>
+      <p class="muted">
+        日常写作更推荐本地后台：<code>npm run dev</code> 后访问
+        <code>http://localhost:4321/admin</code>。
+      </p>
+    </div>
+
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  </body>
+</html>

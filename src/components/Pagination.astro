@@ -1,0 +1,71 @@
+---
+/**
+ * Pagination —— 通用分页
+ */
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  /** 基础路径，如 /articles */
+  base: string;
+}
+
+const { currentPage, totalPages, base } = Astro.props;
+const url = (p: number) => (p === 1 ? base : `${base}/page/${p}`);
+const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+---
+
+{
+  totalPages > 1 && (
+    <nav
+      aria-label="分页"
+      class="mt-16 flex items-center justify-between border-t border-rule pt-6"
+    >
+      <div>
+        {currentPage > 1 ? (
+          <a
+            href={url(currentPage - 1)}
+            class="group inline-flex items-center gap-2 font-sans text-[0.82rem] text-ink-soft hover:text-accent transition-colors"
+          >
+            <span class="transition-transform group-hover:-translate-x-0.5">←</span>
+            较新
+          </a>
+        ) : (
+          <span class="font-sans text-[0.82rem] text-ink-faint/50">← 较新</span>
+        )}
+      </div>
+
+      <ol class="flex items-center gap-1.5">
+        {pages.map((p) => (
+          <li>
+            <a
+              href={url(p)}
+              aria-current={p === currentPage ? 'page' : undefined}
+              class:list={[
+                'inline-flex h-8 min-w-8 items-center justify-center px-2 font-sans text-[0.78rem] tabular-nums transition-colors',
+                p === currentPage
+                  ? 'bg-ink text-paper'
+                  : 'text-ink-soft hover:bg-paper-soft hover:text-ink',
+              ]}
+            >
+              {p}
+            </a>
+          </li>
+        ))}
+      </ol>
+
+      <div>
+        {currentPage < totalPages ? (
+          <a
+            href={url(currentPage + 1)}
+            class="group inline-flex items-center gap-2 font-sans text-[0.82rem] text-ink-soft hover:text-accent transition-colors"
+          >
+            较早
+            <span class="transition-transform group-hover:translate-x-0.5">→</span>
+          </a>
+        ) : (
+          <span class="font-sans text-[0.82rem] text-ink-faint/50">较早 →</span>
+        )}
+      </div>
+    </nav>
+  )
+}
