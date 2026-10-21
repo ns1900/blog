@@ -1,54 +1,39 @@
 @echo off
 setlocal enabledelayedexpansion
-chcp 65001 >nul
 cd /d "%~dp0"
+title Nanguazhen - Publish
 
-echo ============================================
-echo   Nanguazhen - Publish to GitHub
-echo ============================================
+echo ==========================================
+echo    Nanguazhen - Publish to GitHub
+echo ==========================================
 echo.
 
 where git >nul 2>nul
 if errorlevel 1 (
-    echo [ERROR] git not found. Install Git for Windows: https://git-scm.com/download/win
+    echo [ERROR] git not found. Install Git for Windows.
     pause
     exit /b 1
 )
 
-set REPO_OK=0
-for /f "delims=" %%i in ('git remote 2^>nul') do (
-    if "%%i"=="origin" set REPO_OK=1
-)
-
-if "!REPO_OK!"=="0" (
-    echo [!] No remote repository configured yet.
-    echo.
-    echo Create an EMPTY repository on GitHub first, then paste its URL below.
-    echo Example: https://github.com/yourname/nanguazhen.git
-    echo.
-    set /p REPO_URL=Paste repository URL: 
-    if "!REPO_URL!"=="" (
-        echo Cancelled.
-        pause
-        exit /b 1
-    )
-    git remote add origin "!REPO_URL!"
-    echo [OK] Remote configured.
+git remote get-url origin >nul 2>nul
+if errorlevel 1 (
+    echo [!] No remote configured. Setting up now...
+    git remote add origin git@github.com:ns1900/blog.git
+    echo [OK] Remote set to github.com/ns1900/blog
     echo.
 )
 
 git add -A
 
-echo.
 set "MSG="
-set /p MSG=What changed? (press Enter for default): 
+set /p MSG=What changed? (Enter = default): 
 if "!MSG!"=="" set "MSG=Update site content"
 
 git -c user.name="NS" -c user.email="ns@ns1900.com" commit -m "!MSG!" >nul 2>nul
 if errorlevel 1 (
-    echo [i] No new changes to commit.
+    echo [i] No new changes detected.
 ) else (
-    echo [OK] Committed.
+    echo [OK] Changes committed.
 )
 
 echo.
@@ -57,19 +42,21 @@ git push -u origin main
 
 if errorlevel 1 (
     echo.
-    echo [ERROR] Push failed. Common causes:
-    echo   1. First push needs login: username = GitHub username, password = Personal Access Token
-    echo   2. Network issue, try again
-    echo   3. Wrong repository URL
+    echo [ERROR] Push failed. Check:
+    echo   1. Network connection
+    echo   2. SSH key still on GitHub: https://github.com/settings/keys
+    echo   3. Remote URL: git remote -v
+    echo.
     pause
     exit /b 1
 )
 
 echo.
-echo ============================================
+echo ==========================================
 echo   [OK] Pushed successfully!
-echo   Vercel will rebuild within 30-60 seconds.
-echo   Check progress: https://vercel.com/dashboard
-echo ============================================
+echo   Vercel rebuilds in 30-60 seconds.
+echo   Dashboard: https://vercel.com/dashboard
+echo   Site:      https://ns1900.com
+echo ==========================================
 echo.
 pause
