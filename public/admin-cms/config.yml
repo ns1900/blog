@@ -10,7 +10,7 @@ backend:
 # 站点地址（用于预览链接）
 site_url: https://www.ns1900.com
 display_url: https://www.ns1900.com
-logo_url: https://www.ns1900.com/favicon.png
+logo_url: https://www.ns1900.com/favicon-192.png
 
 locale: zh_Hans
 

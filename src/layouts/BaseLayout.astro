@@ -19,7 +19,9 @@ const {
   noindex = false,
 } = Astro.props;
 
-const pageTitle = title ? `${title} – ${SITE.title}` : `${SITE.title} · ${SITE.subtitle}`;
+const pageTitle = title
+  ? `${title} – ${SITE.title}·${SITE.subtitle}`
+  : `${SITE.title}·${SITE.subtitle}`;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
 const ogImage = image
   ? new URL(image, Astro.site ?? SITE.url).href
@@ -60,8 +62,10 @@ const isActive = (href: string) => {
     <meta name="twitter:image" content={ogImage} />
 
     <!-- 图标 -->
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="icon" href="/favicon.png" type="image/png" sizes="any" />
+    <!-- 图标：南瓜镇 Logo -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={SITE.title} href="/rss.xml" />
