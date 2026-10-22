@@ -32,7 +32,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  const direct = req.query.direct === '1';
+  // direct 标记通过 state 传递（GitHub 原样带回）
+  const state = typeof req.query.state === 'string' ? req.query.state : '';
+  const direct = state.startsWith('direct:');
 
   try {
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
