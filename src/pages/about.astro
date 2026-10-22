@@ -1,18 +1,5 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { SITE } from '../consts';
-
-const now = [
-  { label: '正在做', value: '软装设计项目，餐饮 / 酒店 / 会所' },
-  { label: '正在读', value: '《城市意象》· 重读第三遍' },
-  { label: '正在看', value: '侯孝贤、阿巴斯、以及大量无用的纪录片' },
-  { label: '正在学', value: '把复杂的事情说简单' },
-];
-
-const links = [
-  { name: 'RSS 订阅', href: '/rss.xml', desc: '用阅读器订阅，不依赖算法' },
-  { name: '全部标签', href: '/tags', desc: '按主题翻找旧文' },
-];
 ---
 
 <BaseLayout title="关于我" description="关于南瓜镇和它的作者。">
@@ -28,80 +15,15 @@ const links = [
 
     <div class="prose mt-10 md:mt-12">
       <p>
-        我叫 <strong>{SITE.author}</strong>，网名 ns1900。做软装设计，白天在工地和图纸之间来回跑，
-        晚上写字、看片、翻财报。南瓜镇是我的个人记事簿，从 {SITE.since} 年开始启用。
-      </p>
-      <p>
-        「南瓜镇」这个名字没什么深意。小时候外婆家的院子每年都种南瓜，藤蔓长得毫无章法，
-        却能结出很大的果实。我喜欢这个意象——看起来松散、缓慢、不设边界，实际上一直在长。
-      </p>
-
-      <h2>这里写什么</h2>
-      <p>
-        主要是三类东西：一是<strong>设计工作</strong>里的观察，材料、光线、尺度、人与空间的关系；
-        二是<strong>影像与阅读</strong>的笔记，看完一部片子或一本书之后还留在脑子里的部分；
-        三是<strong>城市与日常</strong>，走路时看到的东西，以及一些没想清楚就先写下来的判断。
-      </p>
-      <p>
-        不追热点，不做资讯。这里的文字大多可以慢慢读，也会有一些只有一句话的记录。
-      </p>
-
-      <h2>关于这个站</h2>
-      <p>
-        站点使用 Astro 静态生成，样式用 Tailwind CSS，内容以 Markdown 文件形式存在仓库里。
-        没有数据库，没有追踪脚本，没有广告。页面尽量轻，图片按需加载，在手机上也好读。
-      </p>
-      <p>
-        如果你也想搭一个类似的地方，可以看看页脚的 RSS——
-        喜欢一个博客最好的方式，是把它放进你的阅读器。
+        我叫聂帅，ID 是 ns1900，无锡人。这里写一些关于电影、游戏、设计相关的思考。
       </p>
     </div>
 
-    <!-- Now -->
-    <section class="mt-16">
-      <h2 class="font-sans text-[0.7rem] tracking-[0.26em] uppercase text-ink border-b border-ink/75 pb-2.5">
-        Now
-      </h2>
-      <dl class="mt-5 divide-y divide-rule/80">
-        {
-          now.map((item) => (
-            <div class="grid grid-cols-[5.5rem_1fr] md:grid-cols-[7rem_1fr] gap-3 py-3.5">
-              <dt class="meta pt-0.5">{item.label}</dt>
-              <dd class="font-serif text-[0.92rem] leading-relaxed text-ink-soft">
-                {item.value}
-              </dd>
-            </div>
-          ))
-        }
-      </dl>
-    </section>
-
-    <!-- 链接 -->
-    <section class="mt-14">
-      <h2 class="font-sans text-[0.7rem] tracking-[0.26em] uppercase text-ink border-b border-ink/75 pb-2.5">
-        订阅与索引
-      </h2>
-      <ul class="mt-5 space-y-3">
-        {
-          links.map((l) => (
-            <li>
-              <a href={l.href} class="group flex items-baseline justify-between gap-4 py-1">
-                <span class="font-serif text-[0.95rem] text-ink group-hover:text-accent transition-colors link-underline">
-                  {l.name}
-                </span>
-                <span class="meta text-right">{l.desc}</span>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </section>
-
-    <footer class="mt-16 pt-7 border-t border-rule">
+    <footer class="mt-14 pt-7 border-t border-rule">
       <p class="font-serif text-[0.9rem] text-ink-soft">
         想聊点什么，可以写信到
-        <a href="mailto:hello@ns1900.com" class="text-accent hover:underline underline-offset-4">
-          hello@ns1900.com
+        <a href="mailto:908069430@qq.com" class="text-accent hover:underline underline-offset-4">
+          908069430@qq.com
         </a>
       </p>
     </footer>
