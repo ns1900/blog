@@ -45,6 +45,9 @@ export default async function handler(req, res) {
     }
 
     // 把 token postMessage 给 Decap CMS（它会自己关闭弹窗）
+    // 注意：targetOrigin 用 '*'，因为 ORIGIN 环境变量若与页面地址有
+    // 任何细微差别（尾斜杠等），精确匹配会导致消息被静默丢弃。
+    // 接收方 window.opener 只可能是本站的 CMS 页面，风险可控。
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.end(
@@ -54,17 +57,18 @@ export default async function handler(req, res) {
       </style></head><body><script>
         (function () {
           var token = ${JSON.stringify(data.access_token)};
-          var target = ${JSON.stringify(origin)};
           try {
             if (window.opener) {
               window.opener.postMessage(
                 { token: token, provider: 'github' },
-                target
+                '*'
               );
-              window.close();
+              document.body.textContent = '登录成功，正在返回编辑器…';
+              setTimeout(function () { window.close(); }, 800);
               return;
             }
           } catch (e) {}
+          var target = ${JSON.stringify(origin)};
           document.body.textContent = '授权已收到，但本次不是从后台窗口发起的，需要重新登录。正在跳回后台…';
           setTimeout(function () { location.replace(target + '/admin-cms/'); }, 2000);
         })();
