@@ -7,13 +7,15 @@
     <title>南瓜镇 · 内容管理</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <style>
+      html,
       body {
         margin: 0;
+        height: 100%;
         background: #f4ede9;
         font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
         color: #241a16;
       }
-      #tip {
+      #fallback {
         max-width: 34rem;
         margin: 12vh auto;
         padding: 2rem;
@@ -21,45 +23,48 @@
         line-height: 1.9;
         font-size: 0.92rem;
       }
-      #tip h1 {
+      #fallback h1 {
         font-family: 'Songti SC', 'SimSun', serif;
         font-size: 1.3rem;
         letter-spacing: 0.1em;
         margin: 0 0 0.8rem;
       }
-      #tip code {
+      #fallback code {
         background: #efe6e0;
         padding: 0.1em 0.35em;
         font-size: 0.85em;
+        word-break: break-all;
       }
-      #tip a {
+      #fallback a {
         color: #a8471f;
       }
-      #tip p {
+      #fallback p {
         margin: 0.6rem 0;
       }
-      #tip .muted {
+      #fallback .muted {
         color: #8b7870;
         font-size: 0.82rem;
       }
     </style>
   </head>
   <body>
-    <div id="tip">
+    <div id="fallback">
       <h1>内容管理后台</h1>
-      <p>正在加载…</p>
+      <p>正在加载编辑器…</p>
+      <p class="muted">如果超过 20 秒还停在这里，说明加载失败。常见原因：</p>
       <p class="muted">
-        如果长时间停在这里，多半是还没配置 OAuth。请按
-        <a href="https://github.com/ns1900/nanguazhen/blob/main/docs/CMS-SETUP.md">docs/CMS-SETUP.md</a>
-        完成三步配置，并确认 <code>config.yml</code> 已存在。
+        1. OAuth 尚未配置完成 → 参考
+        <a href="https://github.com/ns1900/blog/blob/main/docs/CMS-SETUP.md">docs/CMS-SETUP.md</a><br />
+        2. 当前网络访问不了 unpkg.com（国内偶发）→ 换网络或用手机热点试试<br />
+        3. 配置文件缺失 → 应存在 <code>/admin-cms/config.yml</code>
       </p>
       <p class="muted">
-        日常写作更推荐本地后台：<code>npm run dev</code> 后访问
+        本地写作入口：双击项目里的 <code>start.bat</code>，访问
         <code>http://localhost:4321/admin</code>。
       </p>
     </div>
 
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-    <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+    <!-- Decap CMS 主程序 -->
+    <script src="https://unpkg.com/decap-cms@^3.3.3/dist/decap-cms.js"></script>
   </body>
 </html>

@@ -6,6 +6,8 @@ dist/
 *.log
 .env
 .env.production
+.env.*.local
+.env.oauth.local
 .tmp
 .playwright-cli/
 .workbuddy/
