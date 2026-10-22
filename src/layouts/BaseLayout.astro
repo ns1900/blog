@@ -61,6 +61,7 @@ const isActive = (href: string) => {
 
     <!-- 图标 -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="application/rss+xml" title={SITE.title} href="/rss.xml" />
@@ -87,10 +88,18 @@ const isActive = (href: string) => {
     <header class="sticky top-0 z-40 bg-paper/92 backdrop-blur-sm border-b border-rule/70">
       <div class="wrap flex items-center justify-between h-16 md:h-20">
         <a href="/" class="group flex flex-col justify-center shrink-0 leading-none">
-          <span
-            class="font-serif text-[1.15rem] md:text-[1.3rem] tracking-[0.08em] font-semibold text-ink group-hover:text-accent transition-colors"
-          >
-            南瓜镇
+          <span class="flex items-center gap-2">
+            <img
+              src="/images/logo.png"
+              alt=""
+              aria-hidden="true"
+              class="w-[1.1em] h-[1.1em] text-[1.15rem] md:text-[1.3rem] object-contain"
+            />
+            <span
+              class="font-serif text-[1.15rem] md:text-[1.3rem] tracking-[0.08em] font-semibold text-ink group-hover:text-accent transition-colors"
+            >
+              南瓜镇
+            </span>
           </span>
           <span class="mt-1.5 text-[0.66rem] md:text-[0.68rem] tracking-[0.18em] text-ink-faint">
             聂帅的个人博客
