@@ -4,7 +4,7 @@ subtitle: 甲方说「太冷了」，我改了三遍才明白他在说什么
 description: 这个项目最后没有按我的方案落地，但我在返工的过程里学到了比落地更重要的东西——怎么听懂一句形容词。
 pubDate: 2026-09-15
 author: NS
-tags: [设计, 空间, 复盘]
+tags: [游戏]
 cover: /images/sample-cover.jpg
 coverAlt: 酒店大堂的暖色灯光
 ---

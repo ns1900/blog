@@ -4,7 +4,7 @@ subtitle: 越是想被看见的空间，越要学会藏
 description: 上周去一家只有 18 平米的糖水铺量尺，回来路上一直在想：为什么有的空间东西很少却叫人坐得下，有的塞满了好材料反而让人想走。
 pubDate: 2026-10-18
 author: NS
-tags: [设计, 空间, 观察]
+tags: [游戏]
 featured: true
 cover: /images/sample-cover.jpg
 coverAlt: 傍晚的街角，暖色灯光从玻璃里透出来
