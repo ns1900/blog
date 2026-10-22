@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>南瓜镇 · 登录中</title>
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f4ede9;
+        color: #241a16;
+        font-family: 'Noto Sans SC', 'Microsoft YaHei', system-ui, sans-serif;
+        font-size: 0.9rem;
+        text-align: center;
+      }
+      #tip {
+        opacity: 0.75;
+        letter-spacing: 0.05em;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="tip">正在跳转到 GitHub 授权…</div>
+    <script>
+      (function () {
+        // 把当前实际域名带给 OAuth 入口，让它在 ns1900.com 和 vercel.app
+        // 之间自动选对回跳地址（服务端有白名单校验）。
+        var bd = encodeURIComponent(location.origin);
+        var direct = location.search.indexOf('direct=1') >= 0 ? '1' : '0';
+        setTimeout(function () {
+          location.replace('/api/auth?bd=' + bd + '&direct=' + direct);
+        }, 120);
+      })();
+    </script>
+  </body>
+</html>

@@ -7,7 +7,33 @@
 //       拒绝伪造/篡改的回调请求（CSRF 防护）。
 //
 // 环境变量：OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, ORIGIN
+//
+// 关于 ORIGIN：回跳地址优先用 ORIGIN，但它只认一个值。
+// 为了在「xxx.vercel.app」和「ns1900.com」之间都能登录，这里按白名单
+// 校验浏览器带来的 origin/bd 参数，白名单内才采纳，否则退回 ORIGIN。
 import crypto from 'node:crypto';
+
+const ALLOWED_HOSTS = [
+  'ns1900.com',
+  'www.ns1900.com',
+  'blog-eta-eosin-79.vercel.app',
+  'localhost:4321',
+];
+
+function pickOrigin(req, envOrigin) {
+  const candidates = [];
+  const q = req.query || {};
+  const h = req.headers || {};
+  for (const raw of [q.bd, req.body && req.body.bd, h.origin]) {
+    if (typeof raw !== 'string' || !raw) continue;
+    try {
+      const u = new URL(raw);
+      if (ALLOWED_HOSTS.includes(u.host)) candidates.push(`${u.protocol}//${u.host}`);
+    } catch (e) {}
+  }
+  if (envOrigin) candidates.push(envOrigin.replace(/\/+$/, ''));
+  return candidates[0] || '';
+}
 
 function signState(nonce, direct, secret) {
   const payload = `${nonce}.${direct ? 'd' : 'n'}`;
@@ -29,7 +55,7 @@ function verifyState(state, secret) {
 }
 
 export default async function handler(req, res) {
-  const origin = process.env.ORIGIN;
+  const origin = pickOrigin(req, process.env.ORIGIN);
   const clientId = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
 
@@ -115,8 +141,18 @@ export default async function handler(req, res) {
               return;
             }
           } catch (e) {}
+          // 没有 opener（用户直接在本窗口完成授权）→ 直接写 localStorage 兜底
+          try {
+            localStorage.setItem(
+              'decap-cms-user',
+              JSON.stringify({ token: token, backendName: 'github' })
+            );
+            document.body.textContent = '授权成功，正在进入编辑器…';
+            setTimeout(function () { location.replace(${cmsUrlJson}); }, 400);
+            return;
+          } catch (e) {}
           document.body.innerHTML = '授权已收到，但本次不是从后台窗口发起的。'
-            + '<br><a href="${cmsUrl}?direct=1">点这里用直接登录方式进入</a>';
+            + '<br><a href="${cmsUrl}">点这里进入后台</a>';
         })();
       </script>`
     );

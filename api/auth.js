@@ -6,7 +6,32 @@
 // callback 端用同样算法验签，防止伪造回调（CSRF）。
 //
 // 环境变量：OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, ORIGIN
+//
+// 关于 ORIGIN：它只认一个值，但站点同时挂在 ns1900.com 和 xxx.vercel.app 上。
+// 这里按白名单采纳浏览器带来的 origin 参数，callback 端用同样的白名单再校验一次。
 import crypto from 'node:crypto';
+
+const ALLOWED_HOSTS = [
+  'ns1900.com',
+  'www.ns1900.com',
+  'blog-eta-eosin-79.vercel.app',
+  'localhost:4321',
+];
+
+function pickOrigin(req, envOrigin) {
+  const candidates = [];
+  const q = req.query || {};
+  const h = req.headers || {};
+  for (const raw of [q.bd, h.origin, h.referer]) {
+    if (typeof raw !== 'string' || !raw) continue;
+    try {
+      const u = new URL(raw);
+      if (ALLOWED_HOSTS.includes(u.host)) candidates.push(`${u.protocol}//${u.host}`);
+    } catch (e) {}
+  }
+  if (envOrigin) candidates.push(envOrigin.replace(/\/+$/, ''));
+  return candidates[0] || '';
+}
 
 function signState(nonce, direct, secret) {
   const payload = `${nonce}.${direct ? 'd' : 'n'}`;
@@ -17,7 +42,7 @@ function signState(nonce, direct, secret) {
 export default async function handler(req, res) {
   const clientId = process.env.OAUTH_CLIENT_ID;
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
-  const origin = process.env.ORIGIN;
+  const origin = pickOrigin(req, process.env.ORIGIN);
 
   if (!clientId || !clientSecret || !origin) {
     res.statusCode = 500;
@@ -42,3 +67,6 @@ export default async function handler(req, res) {
   res.setHeader('Location', authUrl);
   res.end();
 }
+
+// 未使用，但保留导出便于将来复用
+export { signState, pickOrigin, ALLOWED_HOSTS };
