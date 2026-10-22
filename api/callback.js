@@ -1,9 +1,33 @@
 // OAuth 回调：用临时 code 换取 access token
 // 两种工作模式：
 //   A) 弹窗模式（Decap 默认）——把 token postMessage 给 opener
-//   B) 直接登录模式（?direct=1）——把 token 写进 localStorage 的
-//      decap-cms-user 后跳回编辑器，绕开所有弹窗/消息通信问题
+//   B) 直接登录模式——把 token 写进 localStorage 的 decap-cms-user 后跳回编辑器
+//
+// 安全：state 由 api/auth.js 用 HMAC-SHA256 签名，此处验签，
+//       拒绝伪造/篡改的回调请求（CSRF 防护）。
+//
 // 环境变量：OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, ORIGIN
+import crypto from 'node:crypto';
+
+function signState(nonce, direct, secret) {
+  const payload = `${nonce}.${direct ? 'd' : 'n'}`;
+  const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+  return `${payload}.${sig}`;
+}
+
+function verifyState(state, secret) {
+  if (typeof state !== 'string') return null;
+  const parts = state.split('.');
+  if (parts.length !== 3) return null;
+  const [nonce, flag, sig] = parts;
+  if (flag !== 'd' && flag !== 'n') return null;
+  const expected = signState(nonce, flag === 'd', secret).split('.')[2];
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  return { direct: flag === 'd' };
+}
+
 export default async function handler(req, res) {
   const origin = process.env.ORIGIN;
   const clientId = process.env.OAUTH_CLIENT_ID;
@@ -32,9 +56,16 @@ export default async function handler(req, res) {
     return;
   }
 
-  // direct 标记通过 state 传递（GitHub 原样带回）
-  const state = typeof req.query.state === 'string' ? req.query.state : '';
-  const direct = state.startsWith('direct:');
+  // 验签 state：拒绝伪造回调
+  const verified = verifyState(req.query.state, clientSecret);
+  if (!verified) {
+    page(
+      '登录失败：state 校验未通过（可能是伪造的回调，或 OAuth 密钥已变更）。<br>' +
+        `请回到 <a href="${origin}/admin-cms/">后台</a> 重新登录。`
+    );
+    return;
+  }
+  const direct = verified.direct;
 
   try {
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
@@ -50,8 +81,8 @@ export default async function handler(req, res) {
     }
 
     const tokenJson = JSON.stringify(data.access_token);
-    const originJson = JSON.stringify(origin);
     const cmsUrl = `${origin}/admin-cms/`;
+    const cmsUrlJson = JSON.stringify(cmsUrl);
 
     if (direct) {
       // 模式 B：写 localStorage 后跳回编辑器
@@ -64,7 +95,7 @@ export default async function handler(req, res) {
                 JSON.stringify({ token: ${tokenJson}, backendName: 'github' })
               );
             } catch (e) {}
-            setTimeout(function () { location.replace(${JSON.stringify(cmsUrl)}); }, 400);
+            setTimeout(function () { location.replace(${cmsUrlJson}); }, 400);
           })();
         </script>`
       );
