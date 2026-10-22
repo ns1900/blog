@@ -6,14 +6,16 @@
 
 ## 怎么用
 
-1. 浏览器打开 **https://你的域名/admin-cms/**
+1. 浏览器打开 **https://你的域名/admin-cms/**（**结尾的斜杠要有**）
 2. 点 **Login with GitHub**
-3. 浏览器会跳转 GitHub，点 **Authorize**（只需第一次）
-4. 进入编辑器：左边是文章列表，点 **New 文章** 开始写
+3. 弹出小窗口 → 点 **Authorize**（只需第一次）。如果浏览器拦了弹窗，选「始终允许本站弹出窗口」
+4. 弹窗自动关闭，进入编辑器：左边是文章列表，点 **New 文章** 开始写
 5. 写完点右上角 **Publish** → 文章提交到 GitHub → Vercel 自动重新构建
 6. 等 30–60 秒，刷新网站，文章就上去了
 
 手机也能用，界面是响应式的。
+
+> ⚠️ 登录必须从 `/admin-cms/` 页面点按钮发起（它会开弹窗）。**直接在地址栏访问 `/api/auth` 是不行的**——那样授权会在同一标签页完成，令牌传不回编辑器。
 
 ---
 
@@ -21,11 +23,30 @@
 
 | 项目 | 值 |
 |---|---|
-| 后台地址 | `https://<主站域名>/admin-cms/` |
+| 后台地址 | `https://blog-eta-eosin-79.vercel.app/admin-cms/` |
 | 内容仓库 | `ns1900/blog`（main 分支） |
-| OAuth 入口 | `https://<主站域名>/api/auth` |
-| OAuth 回调 | `https://<主站域名>/api/callback` |
+| OAuth 入口 | `https://blog-eta-eosin-79.vercel.app/api/auth` |
+| OAuth 回调 | `https://blog-eta-eosin-79.vercel.app/api/callback` |
 | GitHub OAuth App 名称 | 南瓜镇 CMS |
+| 配置文件 | `public/admin-cms/config.yml` |
+
+### 踩过的坑（重要）
+
+**1. `/config.yml` 404**
+访问地址不带结尾斜杠时（`/admin-cms`），Decap 会把相对路径解析到站点根目录去找 `config.yml`。
+解决办法在 `vercel.json` 里加了一条 rewrite：
+
+```json
+"rewrites": [
+  { "source": "/config.yml", "destination": "/admin-cms/config.yml" }
+]
+```
+
+**2. 登录界面被占位说明遮挡**
+`public/admin-cms/index.html` 里有个「正在加载编辑器…」的说明块。加了一段轮询脚本，检测到 Decap 的 `#nc-root` 渲染出内容后自动隐藏它。
+
+**3. 第三方 OAuth 中转不可用**
+早期方案部署 `vencax/netlify-cms-github-oauth-provider` 到 Vercel，会报 `500 FUNCTION_INVOCATION_FAILED`（老旧 Express 项目不兼容新运行时）。已改为主站自带的 `api/auth.js` + `api/callback.js`。
 
 > 主站域名变了（比如换上 ns1900.com）之后，要同步改三处：
 > 1. GitHub OAuth App 的 Redirect URI
