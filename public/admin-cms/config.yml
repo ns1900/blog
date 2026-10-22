@@ -2,8 +2,9 @@ backend:
   name: github
   repo: ns1900/blog
   branch: main
-  base_url: https://nanguazhen-oauth.vercel.app
-  auth_endpoint: /auth
+  # OAuth 由本站自带的 Vercel Functions 提供（api/auth.js + api/callback.js）
+  base_url: https://blog-eta-eosin-79.vercel.app
+  auth_endpoint: /api/auth
 
 # 站点地址（用于预览链接）
 site_url: https://ns1900.com
