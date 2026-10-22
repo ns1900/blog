@@ -45,12 +45,6 @@
     { "source": "/config.yml", "destination": "/admin-cms/config.yml" }
   ],
   "redirects": [
-    { "source": "/articles/page", "destination": "/articles", "permanent": true },
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.ns1900.com" }],
-      "destination": "https://ns1900.com/:path*",
-      "permanent": true
-    }
+    { "source": "/articles/page", "destination": "/articles", "permanent": true }
   ]
 }
