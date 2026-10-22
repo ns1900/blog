@@ -4,13 +4,13 @@ backend:
   branch: main
   # OAuth 由本站自带的 Vercel Functions 提供（api/auth.js + api/callback.js）
   # 实际回跳域名由 /admin-cms/login.html 带入，这里留主域名即可
-  base_url: https://ns1900.com
+  base_url: https://www.ns1900.com
   auth_endpoint: /api/auth
 
 # 站点地址（用于预览链接）
-site_url: https://ns1900.com
-display_url: https://ns1900.com
-logo_url: https://ns1900.com/favicon.png
+site_url: https://www.ns1900.com
+display_url: https://www.ns1900.com
+logo_url: https://www.ns1900.com/favicon.png
 
 locale: zh_Hans
 

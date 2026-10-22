@@ -4,7 +4,7 @@ export const SITE = {
   /** 副标题 / Slogan */
   subtitle: '一个关于城市、影像与日常的记事簿',
   /** 正式域名，部署后用自定义域名替换亦可 */
-  url: 'https://ns1900.com',
+  url: 'https://www.ns1900.com',
   /** 默认描述（SEO） */
   description:
     '南瓜镇 · 个人图文博客。记录城市漫游、影像与阅读、设计工作和一些不成熟的想法。',
