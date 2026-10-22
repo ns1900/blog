@@ -7,15 +7,19 @@
 ## 怎么用
 
 1. 浏览器打开 **https://你的域名/admin-cms/**（**结尾的斜杠要有**）
-2. 点 **Login with GitHub**
-3. 弹出小窗口 → 点 **Authorize**（只需第一次）。如果浏览器拦了弹窗，选「始终允许本站弹出窗口」
-4. 弹窗自动关闭，进入编辑器：左边是文章列表，点 **New 文章** 开始写
+2. 登录，二选一：
+   - **主按钮**：页面中间点 **Login with GitHub**（弹窗模式）
+   - **备用入口**：页面**最底部**点小字「登录遇到问题？点这里用备用方式登录」（整页跳转模式，最稳）
+3. 点 **Authorize** 授权（只需第一次）
+4. 进入编辑器：左边是文章列表，点 **New 文章** 开始写
 5. 写完点右上角 **Publish** → 文章提交到 GitHub → Vercel 自动重新构建
 6. 等 30–60 秒，刷新网站，文章就上去了
 
 手机也能用，界面是响应式的。
 
-> ⚠️ 登录必须从 `/admin-cms/` 页面点按钮发起（它会开弹窗）。**直接在地址栏访问 `/api/auth` 是不行的**——那样授权会在同一标签页完成，令牌传不回编辑器。
+> ⚠️ 不要在地址栏直接访问 `/api/auth`——那样授权会在同一标签页完成，令牌传不回编辑器。**一定从 `/admin-cms/` 页面上的入口进。**
+
+> 登录状态会保存在浏览器里，一般几周内不用重新登录。换浏览器或清缓存后要重新登一次。
 
 ---
 
@@ -25,12 +29,13 @@
 |---|---|
 | 后台地址 | `https://blog-eta-eosin-79.vercel.app/admin-cms/` |
 | 内容仓库 | `ns1900/blog`（main 分支） |
-| OAuth 入口 | `https://blog-eta-eosin-79.vercel.app/api/auth` |
-| OAuth 回调 | `https://blog-eta-eosin-79.vercel.app/api/callback` |
+| OAuth 入口 | `/api/auth`（加 `?direct=1` 为备用模式） |
+| OAuth 回调 | `/api/callback` |
 | GitHub OAuth App 名称 | 南瓜镇 CMS |
+| GitHub 登记的 Redirect URI | `https://blog-eta-eosin-79.vercel.app/api/callback` |
 | 配置文件 | `public/admin-cms/config.yml` |
 
-### 踩过的坑（重要）
+### 踩过的坑（重要，别再踩）
 
 **1. `/config.yml` 404**
 访问地址不带结尾斜杠时（`/admin-cms`），Decap 会把相对路径解析到站点根目录去找 `config.yml`。
@@ -48,10 +53,18 @@
 **3. 第三方 OAuth 中转不可用**
 早期方案部署 `vencax/netlify-cms-github-oauth-provider` 到 Vercel，会报 `500 FUNCTION_INVOCATION_FAILED`（老旧 Express 项目不兼容新运行时）。已改为主站自带的 `api/auth.js` + `api/callback.js`。
 
+**4. 弹窗授权后主页无任何反应**
+弹窗走完流程自动关闭，但令牌通过 `postMessage` 传给主页面时被静默丢弃（targetOrigin 不匹配不报错）。
+解决：增加**备用登录通道**——`/api/auth?direct=1` 整页跳转，callback 拿到令牌后直接写进 `localStorage['decap-cms-user']`（格式 `{token, backendName: 'github'}`）再跳回编辑器，完全绕开弹窗与消息通信。
+
+**5. GitHub 报 `Invalid Redirect URI`**
+GitHub 对 `redirect_uri` 是**整串精确匹配**，多一个 `?direct=1` 都不认。
+解决：自定义标记不能塞进 redirect_uri，改用 `state` 参数传递（`state=direct:xxx`），GitHub 会原样带回。
+
 > 主站域名变了（比如换上 ns1900.com）之后，要同步改三处：
 > 1. GitHub OAuth App 的 Redirect URI
 > 2. Vercel 项目环境变量里的 `ORIGIN`
-> 3. `public/admin-cms/config.yml` 的 `base_url`
+> 3. `config.yml` 的 `base_url`
 
 ---
 
