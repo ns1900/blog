@@ -53,18 +53,102 @@
       <p>正在加载编辑器…</p>
       <p class="muted">如果超过 20 秒还停在这里，说明加载失败。常见原因：</p>
       <p class="muted">
-        1. OAuth 尚未配置完成 → 参考
-        <a href="https://github.com/ns1900/blog/blob/main/docs/CMS-SETUP.md">docs/CMS-SETUP.md</a><br />
-        2. 当前网络访问不了 unpkg.com（国内偶发）→ 换网络或用手机热点试试<br />
-        3. 配置文件缺失 → 应存在 <code>/admin-cms/config.yml</code>
-      </p>
-      <p class="muted">
-        本地写作入口：双击项目里的 <code>start.bat</code>，访问
-        <code>http://localhost:4321/admin</code>。
+        1. 当前网络访问不了 unpkg.com（国内偶发）→ 换网络或用手机热点试试<br />
+        2. OAuth 环境变量缺失 → Vercel 项目设置里检查 OAUTH_CLIENT_ID 等<br />
+        3. 本地写作入口：双击项目里的 <code>start.bat</code>，访问
+        <code>http://localhost:4321/admin</code>
       </p>
     </div>
 
-    <!-- Decap CMS 主程序 -->
+    <script>
+      // 手动初始化：配置直接内嵌，避免 Decap fetch config.yml 时
+      // 在无尾斜杠地址（/admin-cms）下解析到根目录导致 404
+      window.CMS_MANUAL_INIT = true;
+      window.CMS_CONFIG = {
+        backend: {
+          name: 'github',
+          repo: 'ns1900/blog',
+          branch: 'main',
+          // OAuth 由本站自带的 Vercel Functions 提供（api/auth.js + api/callback.js）
+          base_url: 'https://blog-eta-eosin-79.vercel.app',
+          auth_endpoint: '/api/auth',
+        },
+        site_url: 'https://ns1900.com',
+        display_url: 'https://ns1900.com',
+        logo_url: 'https://ns1900.com/favicon.svg',
+        locale: 'zh_Hans',
+        media_folder: 'public/images',
+        public_folder: '/images',
+        publish_mode: 'simple',
+        collections: [
+          {
+            name: 'posts',
+            label: '文章',
+            label_singular: '文章',
+            folder: 'src/content/posts',
+            create: true,
+            delete: true,
+            slug: '{{year}}-{{month}}-{{day}}-{{slug}}',
+            preview_path: 'articles/{{fields.slug}}',
+            summary: '{{title}} · {{pubDate}}',
+            sortable_fields: ['pubDate', 'title'],
+            fields: [
+              { name: 'title', label: '标题', widget: 'string' },
+              { name: 'subtitle', label: '副标题', widget: 'string', required: false },
+              {
+                name: 'description',
+                label: '摘要',
+                widget: 'text',
+                required: false,
+                hint: '显示在列表与搜索结果中，建议 40–80 字',
+              },
+              {
+                name: 'pubDate',
+                label: '发布日期',
+                widget: 'datetime',
+                date_format: 'YYYY-MM-DD',
+                time_format: false,
+                format: 'YYYY-MM-DD',
+              },
+              {
+                name: 'updatedDate',
+                label: '修订日期',
+                widget: 'datetime',
+                date_format: 'YYYY-MM-DD',
+                time_format: false,
+                format: 'YYYY-MM-DD',
+                required: false,
+              },
+              { name: 'author', label: '作者', widget: 'string', default: 'NS' },
+              {
+                name: 'tags',
+                label: '分类',
+                widget: 'select',
+                options: ['影评', '游戏'],
+                multiple: true,
+                required: false,
+                hint: '只能选「影评」或「游戏」，可多选',
+              },
+              {
+                name: 'cover',
+                label: '封面图',
+                widget: 'image',
+                required: false,
+                hint: '建议 1600×1067（3:2），会自动用于首页列表',
+              },
+              { name: 'coverAlt', label: '封面说明', widget: 'string', required: false },
+              { name: 'featured', label: '首页大图', widget: 'boolean', default: false, required: false },
+              { name: 'pinned', label: '置顶', widget: 'boolean', default: false, required: false },
+              { name: 'draft', label: '草稿', widget: 'boolean', default: false, required: false },
+              { name: 'body', label: '正文', widget: 'markdown' },
+            ],
+          },
+        ],
+      };
+    </script>
     <script src="https://unpkg.com/decap-cms@^3.3.3/dist/decap-cms.js"></script>
+    <script>
+      window.CMS && CMS.init({ config: window.CMS_CONFIG });
+    </script>
   </body>
 </html>
