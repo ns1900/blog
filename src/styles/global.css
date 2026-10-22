@@ -178,6 +178,11 @@
     margin-top: 1.35em;
   }
 
+  /* 段落之间额外留出间距（.prose > * + * 的 margin-top 已提供基础间距） */
+  p + p {
+    margin-top: 1.6em;
+  }
+
   p {
     margin-block: 0;
   }
