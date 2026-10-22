@@ -40,5 +40,8 @@
   ],
   "redirects": [
     { "source": "/articles/page", "destination": "/articles", "permanent": true }
+  ],
+  "rewrites": [
+    { "source": "/config.yml", "destination": "/admin-cms/config.yml" }
   ]
 }
