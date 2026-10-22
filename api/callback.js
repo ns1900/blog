@@ -48,7 +48,10 @@ export default async function handler(req, res) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.end(
-      `<!doctype html><html><body><script>
+      `<!doctype html><html><head><meta charset="utf-8"><style>
+        body{background:#f4ede9;color:#241a16;font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;
+             display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-size:.95rem}
+      </style></head><body><script>
         (function () {
           var token = ${JSON.stringify(data.access_token)};
           var target = ${JSON.stringify(origin)};
@@ -62,7 +65,8 @@ export default async function handler(req, res) {
               return;
             }
           } catch (e) {}
-          document.body.textContent = '登录成功，但窗口未自动关闭。请手动关闭本窗口。';
+          document.body.textContent = '授权已收到，但本次不是从后台窗口发起的，需要重新登录。正在跳回后台…';
+          setTimeout(function () { location.replace(target + '/admin-cms/'); }, 2000);
         })();
       </script></body></html>`
     );
