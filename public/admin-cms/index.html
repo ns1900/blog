@@ -62,5 +62,17 @@
 
     <!-- Decap CMS 主程序：自动加载 /config.yml（由 vercel.json rewrite 指到 /admin-cms/config.yml） -->
     <script src="https://unpkg.com/decap-cms@^3.3.3/dist/decap-cms.js"></script>
+    <script>
+      // Decap 挂载后隐藏占位说明，避免登录界面被挤到下方
+      (function check() {
+        var root = document.getElementById('nc-root');
+        if (root && root.children.length > 0) {
+          var fb = document.getElementById('fallback');
+          if (fb) fb.style.display = 'none';
+        } else {
+          setTimeout(check, 500);
+        }
+      })();
+    </script>
   </body>
 </html>
