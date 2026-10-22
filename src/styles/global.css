@@ -180,18 +180,6 @@
 
   p {
     margin-block: 0;
-    text-indent: 2em;
-  }
-
-  /* 图片段落、标题后首段不缩进 */
-  h2 + p,
-  h3 + p,
-  h4 + p,
-  blockquote p,
-  li > p,
-  figure p,
-  p:has(> img:only-child) {
-    text-indent: 0;
   }
 
   h1,
@@ -314,7 +302,6 @@
     line-height: 1.6;
     color: var(--color-ink-faint);
     text-align: center;
-    text-indent: 0;
   }
 
   /* 代码 */
@@ -383,9 +370,6 @@
     font-size: 0.85rem;
     color: var(--color-ink-soft);
   }
-  .footnotes p {
-    text-indent: 0;
-  }
 
   /* 任务列表 */
   input[type='checkbox'] {
@@ -398,9 +382,6 @@
 @media (max-width: 640px) {
   .prose {
     line-height: 1.88;
-  }
-  .prose p {
-    text-indent: 1.8em;
   }
 }
 
