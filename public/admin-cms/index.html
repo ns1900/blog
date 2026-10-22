@@ -60,6 +60,33 @@
       </p>
     </div>
 
+    <!-- 备用登录：整页跳转方式，不依赖弹窗与 postMessage -->
+    <div id="alt-login">
+      <a href="/api/auth?direct=1">登录遇到问题？点这里用备用方式登录</a>
+    </div>
+    <style>
+      #alt-login {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 1.2rem;
+        text-align: center;
+        font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        font-size: 0.78rem;
+        z-index: 999;
+      }
+      #alt-login a {
+        color: #8b7870;
+        text-decoration: none;
+        border-bottom: 1px dashed #c9b8ae;
+        padding-bottom: 1px;
+      }
+      #alt-login a:hover {
+        color: #a8471f;
+        border-bottom-color: #a8471f;
+      }
+    </style>
+
     <!-- Decap CMS 主程序：自动加载 /config.yml（由 vercel.json rewrite 指到 /admin-cms/config.yml） -->
     <script src="https://unpkg.com/decap-cms@^3.3.3/dist/decap-cms.js"></script>
     <script>
