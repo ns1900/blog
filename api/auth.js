@@ -11,12 +11,7 @@
 // 这里按白名单采纳浏览器带来的 origin 参数，callback 端用同样的白名单再校验一次。
 import crypto from 'node:crypto';
 
-const ALLOWED_HOSTS = [
-  'ns1900.com',
-  'www.ns1900.com',
-  'blog-eta-eosin-79.vercel.app',
-  'localhost:4321',
-];
+const ALLOWED_HOSTS = ['ns1900.com', 'www.ns1900.com'];
 
 function pickOrigin(req, envOrigin) {
   const candidates = [];

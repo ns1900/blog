@@ -13,12 +13,7 @@
 // 校验浏览器带来的 origin/bd 参数，白名单内才采纳，否则退回 ORIGIN。
 import crypto from 'node:crypto';
 
-const ALLOWED_HOSTS = [
-  'ns1900.com',
-  'www.ns1900.com',
-  'blog-eta-eosin-79.vercel.app',
-  'localhost:4321',
-];
+const ALLOWED_HOSTS = ['ns1900.com', 'www.ns1900.com'];
 
 function pickOrigin(req, envOrigin) {
   const candidates = [];
