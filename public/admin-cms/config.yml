@@ -3,9 +3,10 @@ backend:
   repo: ns1900/blog
   branch: main
   # OAuth 由本站自带的 Vercel Functions 提供（api/auth.js + api/callback.js）
-  # 实际回跳域名由 /admin-cms/login.html 带入，这里留主域名即可
+  # 登录统一走 login.html：它会把浏览器当前域名带给 /api/auth，
+  # 使回跳地址与 GitHub 登记的 https://www.ns1900.com/api/callback 一致
   base_url: https://www.ns1900.com
-  auth_endpoint: /api/auth
+  auth_endpoint: /admin-cms/login.html
 
 # 站点地址（用于预览链接）
 site_url: https://www.ns1900.com
