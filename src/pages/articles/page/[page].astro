@@ -25,7 +25,6 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 const { posts, page, totalPages, total } = Astro.props;
-const startIndex = (page - 1) * SITE.postsPerPage;
 ---
 
 <BaseLayout title={`文章 · 第 ${page} 页`} description={`南瓜镇文章列表第 ${page} 页。`}>
@@ -48,7 +47,7 @@ const startIndex = (page - 1) * SITE.postsPerPage;
 
   <section class="wrap">
     <div>
-      {posts.map((post: any, i: number) => <PostRow post={post} index={startIndex + i + 1} />)}
+      {posts.map((post: any) => <PostRow post={post} />)}
     </div>
 
     <Pagination

@@ -44,7 +44,7 @@ const otherTags = (await getTags()).filter((t) => t.tag !== tag).slice(0, 10);
 
   <section class="wrap">
     <div>
-      {posts.map((post, i) => <PostRow post={post} index={i + 1} />)}
+      {posts.map((post) => <PostRow post={post} />)}
     </div>
 
     {

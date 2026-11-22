@@ -4,26 +4,23 @@
  * 结构仿照 thedissidents.net：图文左右分栏，标题衬线大字，
  * 作者靠左、日期靠右，下方一行摘要，底部虚线分隔。
  */
-import { formatDate, getSlug, excerpt, readingTime, type Post } from '../lib/utils';
+import { formatDate, getSlug, excerpt, type Post } from '../lib/utils';
 
 interface Props {
   post: Post;
-  /** 序号，可选（显示在左侧） */
-  index?: number;
   /** 紧凑模式：无封面时也保持单行高度 */
   compact?: boolean;
   /** 是否显示首字母大图（featured） */
   featured?: boolean;
 }
 
-const { post, index, featured = false } = Astro.props;
+const { post, featured = false } = Astro.props;
 const { data } = post;
 const slug = getSlug(post);
 const href = `/articles/${slug}`;
 const cover = data.cover;
 const hasCover = Boolean(cover);
 const summary = excerpt(post, 96);
-const rt = data.readingTime ?? readingTime(post.body);
 ---
 
 <article class="group relative py-7 md:py-9">
@@ -37,23 +34,11 @@ const rt = data.readingTime ?? readingTime(post.body);
   >
     <!-- 左侧文字 -->
     <div class="min-w-0 flex-1">
-      <!-- 元信息行：日期 / 时长 -->
+      <!-- 元信息行：日期 -->
       <div class="flex items-center gap-3 mb-2">
-        {
-          index !== undefined && (
-            <span class="meta tabular-nums opacity-60">
-              {String(index).padStart(2, '0')}
-            </span>
-          )
-        }
         <time datetime={data.pubDate.toISOString()} class="meta">
           {formatDate(data.pubDate)}
         </time>
-        {data.pinned && (
-          <span class="font-sans text-[0.62rem] tracking-[0.14em] uppercase text-accent border border-accent/40 px-1.5 py-0.5">
-            置顶
-          </span>
-        )}
       </div>
 
       <!-- 标题 -->
@@ -89,20 +74,21 @@ const rt = data.readingTime ?? readingTime(post.body);
         )
       }
 
-      <!-- 作者 + 标签 + 阅读时长 -->
+      <!-- 作者 + 标签 -->
       <div class="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-2">
         <span class="meta">{data.author}</span>
-        <span class="w-px h-3 bg-rule"></span>
-        <span class="meta">{rt} 分钟</span>
         {
           data.tags.length > 0 && (
-            <span class="flex flex-wrap gap-1.5 relative z-20">
-              {data.tags.slice(0, 3).map((tag) => (
-                <a href={`/tags/${encodeURIComponent(tag)}`} class="tag-chip">
-                  {tag}
-                </a>
-              ))}
-            </span>
+            <>
+              <span class="w-px h-3 bg-rule"></span>
+              <span class="flex flex-wrap gap-1.5 relative z-20">
+                {data.tags.slice(0, 3).map((tag) => (
+                  <a href={`/tags/${encodeURIComponent(tag)}`} class="tag-chip">
+                    {tag}
+                  </a>
+                ))}
+              </span>
+            </>
           )
         }
       </div>

@@ -56,7 +56,7 @@ const totalPages = Math.max(1, Math.ceil(all.length / pageSize));
       <p class="py-24 text-center font-serif text-ink-faint">还没有文章。</p>
     ) : (
       <div>
-        {page1.map((post, i) => <PostRow post={post} index={i + 1} />)}
+        {page1.map((post) => <PostRow post={post} />)}
       </div>
     )}
 

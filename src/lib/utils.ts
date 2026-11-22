@@ -35,16 +35,12 @@ export function readingTime(body: string | undefined): number {
 }
 
 /**
- * 排序：置顶 > featured > 日期倒序
- * - pinned：手动固定在最前
- * - featured：首页大图位（没有置顶时优先）
+ * 排序：严格按发布时间倒序（新的在前）
+ * - 首页 / 文章页 / 分类页 / 相关阅读 统一使用
+ * - 首页第一篇自动使用大图样式，不再由 featured / pinned 改变顺序
  */
 export function sortPosts(posts: Post[]): Post[] {
-  return [...posts].sort((a, b) => {
-    if (a.data.pinned !== b.data.pinned) return a.data.pinned ? -1 : 1;
-    if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
-    return b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
-  });
+  return [...posts].sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 }
 
 /** 过滤草稿 + 排序 */

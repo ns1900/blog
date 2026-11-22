@@ -59,9 +59,9 @@ const totalPages = Math.max(1, Math.ceil(rest.length / pageSize));
         </div>
       ) : (
         <div>
-          {lead && <PostRow post={lead} featured index={1} />}
+          {lead && <PostRow post={lead} featured />}
           {firstBatch.map((post, i) => (
-            <PostRow post={post} index={i + 2} />
+            <PostRow post={post} />
           ))}
         </div>
       )
